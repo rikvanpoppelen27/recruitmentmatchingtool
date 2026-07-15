@@ -1,0 +1,265 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Multi-user (fase 7 is stub in de code, maar het datamodel houdt er nu al
+// rekening mee zodat er later geen migratie van bestaande tabellen nodig is).
+// Fase 1-6 draaien op één geseede default User (zie prisma/seed.ts).
+// ---------------------------------------------------------------------------
+
+model User {
+  id     String @id @default(cuid())
+  email  String @unique
+  name   String?
+
+  /// AVG: contactgegevens van de kandidaat anonimiseren vóór samenvoegen met het frontsheet.
+  anonymizeCandidateInPdf Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  markets             Market[]
+  candidates          Candidate[]
+  styleProfile        StyleProfile?
+  frontsheetTemplates FrontsheetTemplate[]
+}
+
+/// Eén "markt" waarop een bureau/gebruiker actief werft: een domein + regio's
+/// + het instelbare kansrijk-drempel. Start: front-end development /
+/// Noord-Holland + Zuid-Holland / 90.
+model Market {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  domain    String   // bv. "front-end development"
+  regions   String[] // bv. ["Noord-Holland", "Zuid-Holland"] — per regio een eigen Adzuna-call
+  threshold Int      @default(90) // matches met score >= threshold zijn "kansrijk"
+
+  vacancies Vacancy[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Vacature-import
+// ---------------------------------------------------------------------------
+
+/// Bron van een vacature. Adzuna is de eerste adapter; Jobfeed volgt later
+/// zonder dat de rest van het model hoeft te veranderen.
+enum JobSource {
+  ADZUNA
+  JOBFEED
+}
+
+model Vacancy {
+  id       String    @id @default(cuid())
+  marketId String
+  market   Market    @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  source     JobSource
+  externalId String // id van de vacature bij de bron
+  region     String // regio waarvoor deze call is uitgevoerd (bv. "Noord-Holland")
+
+  companyName           String
+  companyNameNormalized String // voor ontdubbeling
+  title                 String
+  titleNormalized       String // voor ontdubbeling
+  location              String
+  description           String  @db.Text
+  url                   String
+  salaryMin             Int?
+  salaryMax             Int?
+  postedAt              DateTime?
+
+  /// Hash over companyNameNormalized + titleNormalized + location — voorkomt
+  /// dubbele opslag van dezelfde vacature over meerdere import-runs/regio's.
+  dedupeHash String @unique
+
+  // Output van lib/ai/analyseVacature — null totdat geanalyseerd.
+  mustHaveSkills   String[]
+  niceToHaveSkills String[]
+  seniority        String?
+  analyzedAt       DateTime?
+
+  isActive Boolean @default(true)
+  rawData  Json? // ruwe brondata, voor debugging/herverwerking
+
+  matches Match[]
+
+  importedAt DateTime @default(now())
+  /// Laatst gezien tijdens een importrun — bij een hernieuwde treffer op
+  /// dedupeHash wordt alleen dit veld bijgewerkt, er komt geen nieuwe rij.
+  lastSeenAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([marketId])
+  @@index([source, externalId])
+}
+
+// ---------------------------------------------------------------------------
+// CV-beheer
+// ---------------------------------------------------------------------------
+
+model Candidate {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  firstName       String?
+  lastName        String?
+  email           String?
+  phone           String?
+  region          String?
+  yearsExperience Int?
+  skills          String[]
+  languages       String[]
+
+  educations Education[]
+
+  cvFileName String
+  cvFileUrl  String // pad in Supabase Storage
+  cvMimeType String
+
+  // Output van lib/ai/parseCV — ontbrekende gegevens zijn null, nooit verzonnen.
+  parsedAt      DateTime?
+  rawParsedData Json? // volledige Claude-output, voor audit
+
+  isActive Boolean @default(true)
+
+  /// AVG-dataretentie: na dit moment mag de kandidaat verwijderd worden.
+  deleteAfter DateTime?
+
+  matches Match[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Education {
+  id          String    @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  institution  String?
+  degree       String?
+  fieldOfStudy String?
+  startYear    Int?
+  endYear      Int?
+}
+
+// ---------------------------------------------------------------------------
+// Matching
+// ---------------------------------------------------------------------------
+
+model Match {
+  id          String    @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  vacancyId   String
+  vacancy     Vacancy   @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+
+  score         Int // 0-100
+  matchedSkills String[]
+  missingSkills String[]
+  rationale     String  @db.Text // tekstuele onderbouwing van de score
+  isPromising   Boolean // score >= Market.threshold op het moment van berekenen
+
+  frontsheet Frontsheet?
+  emailDraft EmailDraft?
+
+  calculatedAt DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([candidateId, vacancyId])
+  @@index([isPromising])
+}
+
+// ---------------------------------------------------------------------------
+// Frontsheet-generatie
+// ---------------------------------------------------------------------------
+
+model Frontsheet {
+  id      String @id @default(cuid())
+  matchId String @unique
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  /// JSON met invulvelden voor het template: samenvatting kandidaat, waarom
+  /// deze match, relevante ervaring uitgelicht voor déze vacature.
+  content Json
+
+  frontsheetPdfUrl   String? // alleen het frontsheet, in Supabase Storage
+  presentationPdfUrl String? // frontsheet + CV samengevoegd (frontsheet eerst)
+
+  generatedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+/// Vast document-template per gebruiker (fase 7: per gebruiker instelbaar;
+/// tot die tijd gebruikt door de ene geseede default user).
+model FrontsheetTemplate {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name         String
+  htmlTemplate String @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Mailgeneratie
+// ---------------------------------------------------------------------------
+
+/// Eenmalig per gebruiker opgebouwd stijlprofiel op basis van 2-3 voorbeeldmails.
+model StyleProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  content String @db.Text // tekstueel stijlprofiel, output van lib/ai/bouwStijlprofiel
+
+  exampleEmails ExampleEmail[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ExampleEmail {
+  id             String       @id @default(cuid())
+  styleProfileId String
+  styleProfile   StyleProfile @relation(fields: [styleProfileId], references: [id], onDelete: Cascade)
+
+  subject String
+  body    String @db.Text
+
+  createdAt DateTime @default(now())
+}
+
+/// Concept-introductiemail per kansrijke match. Wordt nooit automatisch
+/// verstuurd — alleen concept, met kopieerknop in het dashboard.
+model EmailDraft {
+  id      String @id @default(cuid())
+  matchId String @unique
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  subject String
+  body    String @db.Text
+
+  generatedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
