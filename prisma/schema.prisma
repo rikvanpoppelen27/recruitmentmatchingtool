@@ -114,22 +114,30 @@ model Candidate {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  firstName       String?
-  lastName        String?
-  email           String?
-  phone           String?
+  fullName String?
+  email    String?
+  /// E.164-genormaliseerd (+31...). Null als normaliseren niet lukte — zie phoneRaw.
+  phone    String?
+  /// Ruwe, niet-normaliseerbare tekst uit het CV. Alleen gezet als phone null is.
+  phoneRaw        String?
   region          String?
   yearsExperience Int?
   skills          String[]
   languages       String[]
+  /// Beschikbaarheid, alleen gezet als expliciet vermeld in het CV.
+  availability    String?
 
-  educations Education[]
+  educations     Education[]
+  workExperience WorkExperience[]
 
   cvFileName String
-  cvFileUrl  String // pad in Supabase Storage
+  cvFileUrl  String // pad in Supabase Storage: {candidateId}/{origineel-bestandsnaam}
   cvMimeType String
+  /// SHA-256 van het originele bestand — hetzelfde bestand nogmaals uploaden
+  /// werkt de bestaande kandidaat bij i.p.v. een duplicaat aan te maken.
+  cvFileHash String @unique
 
-  // Output van lib/ai/parseCV — ontbrekende gegevens zijn null, nooit verzonnen.
+  // Output van lib/ai/parse-cv — ontbrekende gegevens zijn null, nooit verzonnen.
   parsedAt      DateTime?
   rawParsedData Json? // volledige Claude-output, voor audit
 
@@ -156,6 +164,18 @@ model Education {
   fieldOfStudy String?
   startYear    Int?
   endYear      Int?
+}
+
+model WorkExperience {
+  id          String    @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  jobTitle    String?
+  employer    String?
+  /// Vrije tekst zoals in het CV, bv. "2019 - 2022".
+  period      String?
+  description String? @db.Text
 }
 
 // ---------------------------------------------------------------------------

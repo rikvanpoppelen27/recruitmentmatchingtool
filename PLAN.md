@@ -21,7 +21,7 @@ voor projectomschrijving en installatie.
 | Fase | Onderdeel                          | Status        |
 | ---- | ----------------------------------- | ------------- |
 | 1    | Adzuna-import + ontdubbeling        | Klaar |
-| 2    | CV-upload + parsing                 | Nog niet gestart |
+| 2    | CV-upload + parsing                 | Code compleet, wacht op ANTHROPIC_API_KEY |
 | 3    | Matching-engine                     | Nog niet gestart |
 | 4    | Frontsheet + PDF-generatie          | Nog niet gestart |
 | 5    | Stijlprofiel + mailgeneratie        | Nog niet gestart |
@@ -75,21 +75,31 @@ niet per regio apart, anders crasht een vacature die in twee regio's opduikt.
 kandidaatdata. Ontbrekende gegevens worden `null`, nooit verzonnen.
 
 **Bestanden:**
-- `src/lib/cv/extractText.ts` — tekst extractie (pdf-parse / mammoth)
-- `src/lib/storage/supabase.ts` — Supabase Storage client
-- `src/lib/ai/parseCV.ts` — CV-tekst → naam, contactgegevens, skills, ervaring, opleidingen, talen, regio
-- `src/lib/validation/cv.ts` — Zod-schema's voor upload + parse-output
-- `scripts/parse-cv.ts` — CLI: `npm run parse-cv -- <bestand>`
+- `src/lib/cv/extract.ts` — tekstextractie (pdf-parse / mammoth), magic-byte-detectie, gescand-PDF-check
+- `src/lib/cv/normalizePhone.ts` — E.164-normalisatie (libphonenumber-js), los en testbaar
+- `src/lib/storage/supabase.ts` — Supabase Storage client (upload + bucket-aanmaak)
+- `src/lib/ai/parse-cv.ts` — CV-tekst → naam, contactgegevens, skills, ervaring, opleidingen, talen, regio, beschikbaarheid
+- `src/lib/validation/cv.ts` — Zod-schema voor parse-cv-output
+- `scripts/parse-cv.ts` — CLI: `npm run parse-cv -- <bestand-of-map>`
+- `tests/parse-cv.test.ts` — Vitest voor telefoonnormalisatie + Zod-schema
+- `test-cvs/` — twee gegenereerde voorbeeld-CV's (met/zonder telefoonnummer) voor een echte testrun
 
 **Definition of done:**
-- `npm run parse-cv -- <bestand.pdf|docx>` uploadt het CV naar Supabase
+- `npm run parse-cv -- ./test-cvs/jan-jansen.pdf` uploadt het CV naar Supabase
   Storage, extraheert tekst, parset via Claude en slaat een `Candidate` +
-  `Education[]`-records op.
-- Ontbrekende velden zijn `null` in de database, niet verzonnen tekst.
+  `Education[]`/`WorkExperience[]`-records op.
+- Een CV zonder telefoonnummer geeft `phone: null` en een duidelijke
+  waarschuwing, geen verzonnen nummer.
+- Twee keer hetzelfde CV parsen (hash-vergelijking) levert één kandidaat op.
 - Retry (max 2) bij ongeldige JSON; bij blijvende fout stopt het script met
   een duidelijke foutmelding — geen halve/verzonnen data wordt opgeslagen.
+- `tests/parse-cv.test.ts` slaagt.
 
-**Status/Geleerd:** _(nog niet gestart)_
+**Status/Geleerd:** Code compleet, tests groen (10/10), maar de **echte
+parse-run nog niet uitgevoerd** — `ANTHROPIC_API_KEY` staat leeg in `.env`
+(Rik vult 'm later aan). Vraag hier bij hervatten als eerste naar. Onderweg
+geleerd: pdf-lib's PDF-output (compressed xref) verstikt pdf-parse's oudere
+pdf.js — testfixtures met Playwright/Chromium gerenderd i.p.v. hand-rolled.
 
 ---
 
