@@ -11,6 +11,7 @@
     "import": "tsx scripts/import.ts",
     "parse-cv": "tsx scripts/parse-cv.ts",
     "match": "tsx scripts/match.ts",
+    "calibrate": "tsx scripts/calibrate.ts",
     "frontsheet": "tsx scripts/frontsheet.ts",
     "mail": "tsx scripts/mail.ts",
     "db:generate": "prisma generate",

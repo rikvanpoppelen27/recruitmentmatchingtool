@@ -189,11 +189,15 @@ model Match {
   vacancyId   String
   vacancy     Vacancy   @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
 
-  score         Int // 0-100
+  score         Int // eindscore 0-100 (gewogen combinatie van skillScore + semanticScore, evt. knock-out-gecapt)
+  skillScore    Int // deelscore laag 1: deterministische skill-matching (0-100)
+  /// Deelscore laag 2: semantische AI-beoordeling (0-100). Null als de
+  /// voordrempel (must-have-dekking) niet gehaald werd en laag 2 is overgeslagen.
+  semanticScore Int?
   matchedSkills String[]
   missingSkills String[]
   rationale     String  @db.Text // tekstuele onderbouwing van de score
-  isPromising   Boolean // score >= Market.threshold op het moment van berekenen
+  isPromising   Boolean // eindscore >= MATCH_THRESHOLD (env) op het moment van berekenen
 
   frontsheet Frontsheet?
   emailDraft EmailDraft?

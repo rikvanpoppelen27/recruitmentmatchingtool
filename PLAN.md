@@ -22,7 +22,7 @@ voor projectomschrijving en installatie.
 | ---- | ----------------------------------- | ------------- |
 | 1    | Adzuna-import + ontdubbeling        | Klaar |
 | 2    | CV-upload + parsing                 | Klaar |
-| 3    | Matching-engine                     | Nog niet gestart |
+| 3    | Matching-engine                     | Klaar |
 | 4    | Frontsheet + PDF-generatie          | Nog niet gestart |
 | 5    | Stijlprofiel + mailgeneratie        | Nog niet gestart |
 | 6    | Dashboard                           | Nog niet gestart |
@@ -106,28 +106,44 @@ pdf.js — testfixtures daarom met Playwright/Chromium gerenderd.
 
 ## Fase 3 — Matching-engine + kalibratiescript
 
-**Doel:** elke actieve kandidaat matchen tegen elke nieuwe vacature; score
-0-100 met onderbouwing, gemarkeerd als "kansrijk" boven de drempel van de
-`Market` (start 90).
+**Doel:** hybride matching in twee lagen — laag 1 deterministische
+skill-matching (code, gratis), laag 2 semantische AI-beoordeling — gewogen
+samengevoegd tot één eindscore 0-100 met onderbouwing en een `kansrijk`-vlag
+(eindscore ≥ `MATCH_THRESHOLD` uit env).
 
 **Bestanden:**
-- `src/lib/ai/analyseVacature.ts` — vacaturetekst → skills/must-haves/nice-to-haves/senioriteit (verplaatst uit fase 1)
-- `src/lib/ai/berekenMatch.ts` — skill-overlap (gewogen op must-haves) + semantische vergelijking → score + onderbouwing
-- `src/lib/validation/ai.ts` — Zod-schema voor vacature-analyse en match-output
-- `scripts/match.ts` — CLI: `npm run match` (matcht + kalibratiemodus om drempel/gewichten te testen tegen bekende voorbeelden)
-- `tests/matching.test.ts` — Vitest voor de score-berekening (kernlogica, geen 100% coverage-doel)
+- `src/config/skill-aliases.ts` — onderhoudbare synoniemenmap (react.js = react, js = javascript, ...)
+- `src/config/match.ts` — gewichten laag1/laag2, must-have/nice-to-have-weging, knock-out-cap, AI-voordrempel
+- `src/lib/match/skills.ts` — laag 1: deterministische skill-vergelijking
+- `src/lib/match/score.ts` — combineert laag 1 + laag 2 tot eindscore, past knock-out toe
+- `src/lib/ai/analyseVacature.ts` — vacaturetekst → must-haves/nice-to-haves/senioriteit
+- `src/lib/ai/match.ts` (`berekenMatch`) — laag 2: semantische beoordeling (senioriteit, domein, transferable skills, regio)
+- `src/lib/ai/callClaudeJson.ts` — gedeelde retry-met-Zod-validatie-helper (alleen voor fase 3's nieuwe AI-functies)
+- `src/lib/validation/ai.ts` — Zod-schema's voor vacature-analyse en semantische match-output
+- `scripts/match.ts` — CLI: `npm run match`
+- `scripts/calibrate.ts` + `calibration/golden-set.json` — CLI: `npm run calibrate`
+- `tests/matching.test.ts` — Vitest voor skill-normalisatie/aliassen, knock-out-regel, score-combinatie
 
 **Definition of done:**
 - `npm run match` analyseert eerst nog niet-geanalyseerde vacatures
-  (`analyzedAt IS NULL`) en maakt daarna voor elke (actieve kandidaat, nieuwe
-  vacature)-combinatie een `Match` aan met score, `matchedSkills`/
-  `missingSkills`, `rationale` en `isPromising` (score >= `Market.threshold`).
-- Draait idempotent: bestaande matches worden herberekend, niet gedupliceerd
-  (`@@unique([candidateId, vacancyId])`).
-- `tests/matching.test.ts` slaagt en dekt in elk geval: volledige match,
-  gedeeltelijke match, ontbrekende must-have skill.
+  (`analyzedAt IS NULL`), matcht daarna elke actieve kandidaat tegen elke
+  vacature die nog geen `Match`-record heeft (`@@unique([candidateId,
+  vacancyId])` voorkomt duplicaten), en print een samenvatting gesorteerd op
+  eindscore met kansrijke matches bovenaan.
+- Laag 2 (AI) wordt alleen aangeroepen als laag 1's must-have-dekking de
+  voordrempel haalt — aantal overgeslagen AI-calls wordt gelogd.
+- Een kandidaat die een must-have mist komt niet boven de knock-out-cap uit,
+  ongeacht de semantische score.
+- `npm run calibrate` draait over `calibration/golden-set.json` en toont
+  labels naast berekende scores, gemiddelde per label, en false positives.
+- `tests/matching.test.ts` slaagt.
 
-**Status/Geleerd:** _(nog niet gestart)_
+**Status/Geleerd:** Klaar. Echte match-run: 22 matches, 14 AI-calls + 8
+overgeslagen op de voordrempel. Kalibratie (illustratieve golden set) gaf
+sterk=70.0 > twijfel=58.5 > zwak=35.5 — juiste richting, 0 false positives,
+maar nog geen sterk-paar boven drempel 90: tuning-werk voor Rik. Veel Adzuna-
+omschrijvingen missen expliciete must-haves (terecht lege lijst i.p.v.
+gegokt), dus laag 2 draagt daar het meeste gewicht.
 
 ---
 

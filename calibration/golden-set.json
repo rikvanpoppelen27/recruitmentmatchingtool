@@ -1,0 +1,38 @@
+[
+  {
+    "candidateEmail": "jan.jansen@example.com",
+    "vacancyCompany": "Yellowtail Conclusion",
+    "vacancyTitle": "Medior/Senior Front-end Developer",
+    "label": "sterk"
+  },
+  {
+    "candidateEmail": "jan.jansen@example.com",
+    "vacancyCompany": "Bright Professionals",
+    "vacancyTitle": "Frontend Developer",
+    "label": "twijfel"
+  },
+  {
+    "candidateEmail": "jan.jansen@example.com",
+    "vacancyCompany": "Independent Recruiters",
+    "vacancyTitle": "Java Backend Developer",
+    "label": "zwak"
+  },
+  {
+    "candidateEmail": "lisa.devries@example.com",
+    "vacancyCompany": "Yellowtail Conclusion",
+    "vacancyTitle": "Medior/Senior Front-end Developer",
+    "label": "sterk"
+  },
+  {
+    "candidateEmail": "lisa.devries@example.com",
+    "vacancyCompany": "Olive Tree Consulting",
+    "vacancyTitle": "Graduate Frontend Developer",
+    "label": "twijfel"
+  },
+  {
+    "candidateEmail": "lisa.devries@example.com",
+    "vacancyCompany": "Ministerie van Defensie",
+    "vacancyTitle": "Senior UX / Product Designer",
+    "label": "zwak"
+  }
+]
