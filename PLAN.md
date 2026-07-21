@@ -21,7 +21,7 @@ voor projectomschrijving en installatie.
 | Fase | Onderdeel                          | Status        |
 | ---- | ----------------------------------- | ------------- |
 | 1    | Adzuna-import + ontdubbeling        | Klaar |
-| 2    | CV-upload + parsing                 | Code compleet, wacht op ANTHROPIC_API_KEY |
+| 2    | CV-upload + parsing                 | Klaar |
 | 3    | Matching-engine                     | Nog niet gestart |
 | 4    | Frontsheet + PDF-generatie          | Nog niet gestart |
 | 5    | Stijlprofiel + mailgeneratie        | Nog niet gestart |
@@ -95,11 +95,12 @@ kandidaatdata. Ontbrekende gegevens worden `null`, nooit verzonnen.
   een duidelijke foutmelding — geen halve/verzonnen data wordt opgeslagen.
 - `tests/parse-cv.test.ts` slaagt.
 
-**Status/Geleerd:** Code compleet, tests groen (10/10), maar de **echte
-parse-run nog niet uitgevoerd** — `ANTHROPIC_API_KEY` staat leeg in `.env`
-(Rik vult 'm later aan). Vraag hier bij hervatten als eerste naar. Onderweg
-geleerd: pdf-lib's PDF-output (compressed xref) verstikt pdf-parse's oudere
-pdf.js — testfixtures met Playwright/Chromium gerenderd i.p.v. hand-rolled.
+**Status/Geleerd:** Klaar. Echte parse-run geverifieerd: telefoon correct naar
+E.164, CV zonder telefoon → `null` + waarschuwing (geen verzonnen nummer),
+zelfde CV twee keer → 1 kandidaat (hash-dedupe, bucket-bestand overschreven).
+`yearsExperience` bleef terecht `null` i.p.v. berekend uit datums. Tests
+groen (20/20). pdf-lib's PDF-output bleek onleesbaar voor pdf-parse's oudere
+pdf.js — testfixtures daarom met Playwright/Chromium gerenderd.
 
 ---
 
