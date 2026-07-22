@@ -6,6 +6,10 @@ import type { StyleProfileContent } from "@/lib/validation/mail";
 import { SettingsForm } from "./settings-form";
 import { StyleProfileSection } from "./style-profile-section";
 
+// Zie toelichting in src/app/page.tsx — geen searchParams/params hier,
+// dus expliciet dynamisch houden i.p.v. statisch bevriezen bij build.
+export const dynamic = "force-dynamic";
+
 export default async function InstellingenPage() {
   const [matchSettings, brandingSettings, styleProfile] = await Promise.all([
     getEffectiveMatchSettings(),

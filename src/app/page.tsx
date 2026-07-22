@@ -6,6 +6,12 @@ import { prisma } from "@/lib/db/prisma";
 
 import { ImportButton } from "./import-button";
 
+// Geen searchParams/params op deze pagina, dus Next.js zou 'm anders
+// statisch proberen te genereren tijdens de build — met de kerncijfers
+// bevroren op het moment van deployen. Dit is een dashboard: altijd verse
+// data per request.
+export const dynamic = "force-dynamic";
+
 export default async function OverzichtPage() {
   const [vacancyCount, candidateCount, promisingMatchCount, lastImport, recentPromisingMatches] = await Promise.all([
     prisma.vacancy.count({ where: { isActive: true } }),
