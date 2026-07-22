@@ -42,9 +42,16 @@ export function ImportButton() {
             duplicaten in run {summary.totalDuplicatesWithinRun}.
           </p>
           <ul className="mt-1 list-inside list-disc">
-            {summary.perRegion.map((r) => (
-              <li key={r.region}>
-                {r.region}: opgehaald {r.fetched}, nieuw {r.new}, al bekend {r.alreadyKnown}
+            {summary.perProfile.map((p) => (
+              <li key={p.profileId}>
+                {p.profileName}: opgehaald {p.fetched}, nieuw {p.new}, al bekend {p.alreadyKnown}
+                {p.errors.length > 0 && (
+                  <ul className="ml-4 list-inside list-disc text-red-700">
+                    {p.errors.map((e, i) => (
+                      <li key={i}>{e}</li>
+                    ))}
+                  </ul>
+                )}
               </li>
             ))}
           </ul>

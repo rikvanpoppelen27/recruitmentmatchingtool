@@ -1,16 +1,13 @@
 /**
- * Standaardconfig voor de vacature-import (fase 1). Aanpassen = deze
- * waarden wijzigen, geen code in de adapter zelf.
+ * Technische veiligheidsinstellingen voor de Adzuna-adapter. Wát en wáár
+ * gezocht wordt komt hier NIET meer vandaan (fase 6B) — dat staat per
+ * zoekprofiel in de database (model `SearchProfile`, beheerd via
+ * /zoekprofielen). Dit bestand bevat alleen generieke API-instellingen die
+ * voor elk profiel gelden.
  */
 export const importConfig = {
-  /** Zoekterm-varianten — elke variant wordt los bevraagd per regio. */
-  searchTerms: ["front-end developer", "frontend developer"],
-  /** Eén Adzuna-call per regio. */
-  regions: ["Noord-Holland", "Zuid-Holland"],
-  /** Adzuna `max_days_old`. */
-  maxDaysOld: 7,
   /** Adzuna `results_per_page`. */
   resultsPerPage: 50,
-  /** Veiligheidsrem: nooit meer dan dit aantal pagina's per combinatie. */
+  /** Veiligheidsrem: nooit meer dan dit aantal pagina's per API-aanroep. */
   maxPagesPerCombination: 5,
 } as const;

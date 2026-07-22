@@ -49,6 +49,29 @@ model Market {
   updatedAt DateTime @updatedAt
 }
 
+/// Instelbaar zoekprofiel (fase 6B): vervangt de hardcoded zoekterm/regio's
+/// uit config/import.ts. De importrun (runImport) draait over alle actieve
+/// profielen. `query` is een booleaanse zoekterm (lib/search/boolean-query.ts),
+/// `provinces` is een array van provinciecodes uit config/provinces.ts.
+model SearchProfile {
+  id     String @id @default(cuid())
+  name   String
+  query  String   @db.Text
+  provinces String[]
+  maxDaysOld Int     @default(7)
+  /// Adzuna title_only: alleen in de functietitel zoeken i.p.v. de volledige vacaturetekst.
+  titleOnly  Boolean @default(false)
+  isActive   Boolean @default(true)
+
+  /// Laatste keer dat dit profiel is uitgevoerd (import of "Nu uitvoeren").
+  lastRunAt   DateTime?
+  /// Aantal opgehaalde resultaten bij de laatste run (vóór ontdubbeling).
+  resultCount Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // ---------------------------------------------------------------------------
 // Vacature-import
 // ---------------------------------------------------------------------------

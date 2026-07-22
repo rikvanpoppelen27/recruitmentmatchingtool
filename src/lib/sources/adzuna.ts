@@ -55,9 +55,13 @@ export class AdzunaAdapter implements JobSourceAdapter {
       const url = new URL(`${ADZUNA_BASE_URL}/${page}`);
       url.searchParams.set("app_id", appId);
       url.searchParams.set("app_key", appKey);
-      url.searchParams.set("what", params.what);
+      if (params.clause.what_and) url.searchParams.set("what_and", params.clause.what_and);
+      if (params.clause.what_or) url.searchParams.set("what_or", params.clause.what_or);
+      if (params.clause.what_phrase) url.searchParams.set("what_phrase", params.clause.what_phrase);
+      if (params.clause.what_exclude) url.searchParams.set("what_exclude", params.clause.what_exclude);
+      if (params.titleOnly) url.searchParams.set("title_only", "1");
       url.searchParams.set("where", params.where);
-      url.searchParams.set("max_days_old", String(importConfig.maxDaysOld));
+      url.searchParams.set("max_days_old", String(params.maxDaysOld));
       url.searchParams.set("results_per_page", String(importConfig.resultsPerPage));
       url.searchParams.set("content-type", "application/json");
 

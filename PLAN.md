@@ -277,7 +277,7 @@ verfijning van frontsheets, mailtemplates, en een visuele opfrisbeurt.
 **Onderdelen (bouwvolgorde, elk met bevestiging vóór het volgende):**
 1. Datamodel-uitbreidingen — **Klaar**
 2. Handmatige vacature-invoer + bronherkenning — **Klaar**
-3. Zoekprofielen (booleaanse query + 12 provincies, config/import.ts leeggemaakt) — nog niet gestart
+3. Zoekprofielen (booleaanse query + 12 provincies, config/import.ts leeggemaakt) — **Klaar**
 4. Shortlist (plus-knop, optimistische UI) — nog niet gestart
 5. Automatisering (matchen → primaire match → frontsheet + mail, kostenbeheersing/wachtrij) — nog niet gestart
 6. Overzichtspagina `/` als werkbank — nog niet gestart
@@ -318,8 +318,36 @@ verfijning van frontsheets, mailtemplates, en een visuele opfrisbeurt.
   ingevuld door Claude; nogmaals hetzelfde ingestuurd → duplicaatmelding i.p.v.
   dubbele opslag. Tests groen (75/75, 6 nieuw voor detectSource).
 
-**Status/Geleerd:** Bezig — onderdeel 2 van 9 klaar, wacht op bevestiging
-voor onderdeel 3 (zoekprofielen).
+**Onderdeel 3 — Zoekprofielen (Klaar):**
+- `lib/search/boolean-query.ts` — recursive-descent parser (precedentie
+  NOT > AND > OR, haakjes, exacte woordgroepen, NOT mag zonder expliciete
+  AND ervoor) + vertaler naar Adzuna-clauses. Adzuna ondersteunt geen geneste
+  haakjes: één OR-groep van losse woorden wordt direct `what_or` (1 aanroep);
+  2+ onafhankelijke OR-groepen die met AND gecombineerd worden, worden
+  opgesplitst in meerdere aanroepen (unie na de bestaande dedupe uit fase 1).
+  24 tests, incl. ongeldige invoer.
+- **Echte bug gevonden via een live testrun** (niet alleen unit-tests): een
+  OR van twee *exacte woordgroepen* (`"front-end developer" OR "frontend
+  developer"`) werd verkeerd samengevoegd tot één `what_or` met de woorden
+  los aan elkaar geplakt — Adzuna interpreteerde dat als "los woord matcht al"
+  en leverde 454 irrelevante resultaten op (bv. "Front Office Supervisor").
+  Opgelost: `what_or` mag alleen losse, niet-exacte woorden bundelen; een OR
+  met een woordgroep erin wordt nu altijd opgesplitst in aparte aanroepen.
+  De 430 foutief geïmporteerde vacatures zijn verwijderd; een herhaalde run
+  gaf daarna het verwachte, kleine resultaat (8 opgehaald, 7 al bekend).
+- `config/provinces.ts` (12 provincies, code + naam + exacte Adzuna-waarde),
+  `SearchProfile`-model (query/provinces/maxDaysOld/titleOnly/isActive/
+  lastRunAt/resultCount) vervangt de hardcoded config/import.ts volledig.
+- `/zoekprofielen`: aanmaken/bewerken/activeren/verwijderen/"Nu uitvoeren",
+  met live leesbare interpretatie (moet/mag bevatten, uitgesloten) — draait
+  volledig client-side omdat de parser vrij is van server-only afhankelijkheden.
+- `/vacatures` snelzoekbalk filtert reeds-geïmporteerde vacatures met dezelfde
+  booleaanse syntax (los vertaalmodule `boolean-query-to-prisma-filter.ts`,
+  geen Adzuna-aanroep) + provincie-multiselect (native `<select multiple>`,
+  geen JS nodig). Tests groen (99/99), productie-build geslaagd.
+
+**Status/Geleerd:** Bezig — onderdeel 3 van 9 klaar, wacht op bevestiging
+voor onderdeel 4 (shortlist).
 
 ---
 

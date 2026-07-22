@@ -2,8 +2,6 @@ import "dotenv/config";
 
 import { PrismaClient } from "@prisma/client";
 
-import { importConfig } from "../src/config/import";
-
 const prisma = new PrismaClient();
 
 const DEFAULT_USER_EMAIL = "recruiter@example.com";
@@ -20,11 +18,28 @@ async function main() {
 
   const existingMarket = await prisma.market.findFirst({ where: { userId: user.id } });
   if (!existingMarket) {
+    // Market.domain/regions zijn nu vestigiaal (fase 6B verving de hardcoded
+    // zoekterm/regio's door SearchProfile) — de Market-rij blijft nodig als
+    // verplichte FK op Vacancy.
     await prisma.market.create({
       data: {
         userId: user.id,
-        domain: importConfig.searchTerms[0],
-        regions: [...importConfig.regions],
+        domain: "vacatures",
+        regions: [],
+      },
+    });
+  }
+
+  const existingProfile = await prisma.searchProfile.findFirst();
+  if (!existingProfile) {
+    await prisma.searchProfile.create({
+      data: {
+        name: "Front-end Randstad",
+        query: '"front-end developer" OR "frontend developer"',
+        provinces: ["NH", "ZH"],
+        maxDaysOld: 7,
+        titleOnly: false,
+        isActive: true,
       },
     });
   }

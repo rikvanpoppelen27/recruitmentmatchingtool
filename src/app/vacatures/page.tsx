@@ -3,7 +3,10 @@ import type { Prisma } from "@prisma/client";
 import { Pagination } from "@/components/pagination";
 import { Select } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PROVINCES } from "@/config/provinces";
 import { prisma } from "@/lib/db/prisma";
+import { BooleanQuerySyntaxError } from "@/lib/search/boolean-query";
+import { booleanQueryToVacancyFilter } from "@/lib/search/boolean-query-to-prisma-filter";
 
 import { AddVacancyDialog } from "./add-vacancy-dialog";
 import { SourceBadge } from "./source-badge";
@@ -12,8 +15,8 @@ const PAGE_SIZE = 50;
 
 interface VacaturesPageProps {
   searchParams: Promise<{
-    region?: string;
-    q?: string;
+    region?: string | string[];
+    bq?: string;
     days?: string;
     page?: string;
   }>;
@@ -22,27 +25,28 @@ interface VacaturesPageProps {
 export default async function VacaturesPage({ searchParams }: VacaturesPageProps) {
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
-  const q = params.q?.trim() ?? "";
-  const region = params.region ?? "";
+  const bq = params.bq?.trim() ?? "";
   const days = params.days ?? "";
+  const selectedRegions = Array.isArray(params.region) ? params.region : params.region ? [params.region] : [];
+
+  let bqError: string | null = null;
+  let bqFilter: Prisma.VacancyWhereInput = {};
+  if (bq) {
+    try {
+      bqFilter = booleanQueryToVacancyFilter(bq);
+    } catch (error) {
+      bqError = error instanceof BooleanQuerySyntaxError ? error.message : "Ongeldige zoekterm.";
+    }
+  }
 
   const where: Prisma.VacancyWhereInput = {
     isActive: true,
-    ...(region ? { region } : {}),
-    ...(days
-      ? { importedAt: { gte: new Date(Date.now() - Number(days) * 24 * 60 * 60 * 1000) } }
-      : {}),
-    ...(q
-      ? {
-          OR: [
-            { title: { contains: q, mode: "insensitive" } },
-            { companyName: { contains: q, mode: "insensitive" } },
-          ],
-        }
-      : {}),
+    ...(selectedRegions.length > 0 ? { region: { in: selectedRegions } } : {}),
+    ...(days ? { importedAt: { gte: new Date(Date.now() - Number(days) * 24 * 60 * 60 * 1000) } } : {}),
+    ...(bq && !bqError ? bqFilter : {}),
   };
 
-  const [total, vacancies, regions] = await Promise.all([
+  const [total, vacancies] = await Promise.all([
     prisma.vacancy.count({ where }),
     prisma.vacancy.findMany({
       where,
@@ -50,15 +54,14 @@ export default async function VacaturesPage({ searchParams }: VacaturesPageProps
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
-    prisma.vacancy.findMany({ distinct: ["region"], select: { region: true }, orderBy: { region: "asc" } }),
   ]);
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   function buildHref(targetPage: number): string {
     const usp = new URLSearchParams();
-    if (region) usp.set("region", region);
-    if (q) usp.set("q", q);
+    for (const r of selectedRegions) usp.append("region", r);
+    if (bq) usp.set("bq", bq);
     if (days) usp.set("days", days);
     usp.set("page", String(targetPage));
     return `/vacatures?${usp.toString()}`;
@@ -76,30 +79,35 @@ export default async function VacaturesPage({ searchParams }: VacaturesPageProps
 
       <form method="get" className="flex flex-wrap items-end gap-4 rounded-lg border border-neutral-200 bg-white p-4">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-neutral-500" htmlFor="q">
-            Zoekterm (titel/bedrijf)
+          <label className="text-xs font-medium text-neutral-500" htmlFor="bq">
+            Zoekterm (booleaans: AND/OR/NOT, &quot;exacte groep&quot;)
           </label>
           <input
-            id="q"
-            name="q"
-            defaultValue={q}
-            className="w-56 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-400"
-            placeholder="bv. front-end, Yellowtail"
+            id="bq"
+            name="bq"
+            defaultValue={bq}
+            className="w-72 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-400"
+            placeholder='bv. react AND (senior OR medior) NOT stage'
           />
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-neutral-500" htmlFor="region">
-            Provincie
+            Provincies (ctrl/cmd-klik voor meerdere)
           </label>
-          <Select id="region" name="region" defaultValue={region} className="w-48">
-            <option value="">Alle provincies</option>
-            {regions.map((r) => (
-              <option key={r.region} value={r.region}>
-                {r.region}
+          <select
+            id="region"
+            name="region"
+            multiple
+            defaultValue={selectedRegions}
+            className="h-24 w-48 rounded-md border border-neutral-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-400"
+          >
+            {PROVINCES.map((p) => (
+              <option key={p.code} value={p.name}>
+                {p.name}
               </option>
             ))}
-          </Select>
+          </select>
         </div>
 
         <div className="flex flex-col gap-1">
@@ -120,6 +128,8 @@ export default async function VacaturesPage({ searchParams }: VacaturesPageProps
           Filteren
         </button>
       </form>
+
+      {bqError && <p className="text-sm text-red-700">Zoekterm kon niet worden verwerkt: {bqError}</p>}
 
       <Table>
         <TableHeader>
