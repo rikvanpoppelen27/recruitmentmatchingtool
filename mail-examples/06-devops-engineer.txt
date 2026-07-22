@@ -1,0 +1,12 @@
+Onderwerp: Kandidaat voor de DevOps-vacature
+
+Hoi Petra,
+
+Voor de DevOps-rol heb ik een kandidaat gevonden die ik graag voorstel. Hij heeft ruime ervaring met Kubernetes en CI/CD-pipelines, en heeft eerder infrastructuur van vergelijkbare schaal beheerd.
+
+CV en frontsheet zitten in de bijlage.
+
+Bel of mail je me even terug als je tijd hebt voor een kennismaking? Ik ben bereikbaar op 06-12345678 of via rik@morganblack.nl.
+
+Groet,
+Rik

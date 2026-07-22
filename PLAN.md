@@ -24,7 +24,7 @@ voor projectomschrijving en installatie.
 | 2    | CV-upload + parsing                 | Klaar |
 | 3    | Matching-engine                     | Klaar |
 | 4    | Frontsheet + PDF-generatie          | Klaar |
-| 5    | Stijlprofiel + mailgeneratie        | Nog niet gestart |
+| 5    | Stijlprofiel + mailgeneratie        | Klaar |
 | 6    | Dashboard                           | Nog niet gestart |
 | 7    | Multi-user (stub)                   | Nog niet gestart |
 
@@ -188,18 +188,34 @@ beide testkandidaten hebben een PDF-CV.
 schrijfstijl van de recruiter. Mails worden nooit automatisch verstuurd.
 
 **Bestanden:**
-- `src/lib/ai/bouwStijlprofiel.ts` — 5-10 voorbeeldmails → tekstueel stijlprofiel (eenmalig per gebruiker)
-- `src/lib/ai/genereerMail.ts` — match + stijlprofiel + voorbeeldmails → onderwerpsregel + mailtekst
-- `scripts/mail.ts` — CLI: `npm run mail -- <matchId>`
+- `mail-examples/` — voorbeeldmails (.txt, één per bestand, `Onderwerp:` als eerste regel)
+- `src/lib/mail/import-examples.ts` — inlezen/parsen, waarschuwing bij <5 voorbeelden, best-effort contactgegevens-detectie + maskering (`--mask`)
+- `src/lib/ai/style-profile.ts` (`bouwStijlprofiel`) — voorbeeldmails → gestructureerd stijlprofiel (JSON) + AI wijst 3 meest representatieve voorbeelden aan
+- `src/lib/ai/mail.ts` (`genereerMail`) — match + kandidaat/vacatureprofiel + stijlprofiel + 3 voorbeelden → onderwerp + body, met variant-parameter (standaard/korter/formeler/informeler)
+- `src/lib/validation/mail.ts` — Zod-schema's (stijlprofiel, dynamische representatieve-indices-validatie, mailinhoud)
+- `scripts/style-profile.ts` — CLI: `npm run style-profile [-- --mask]`
+- `scripts/mail.ts` — CLI: `npm run mail -- <matchId> [--variant=...]` of `-- --all-kansrijk`
+- `tests/mail.test.ts` — parsing, <5-waarschuwing, contactgegevens-detectie/maskering, Zod-schema's
+- Prisma: `StyleProfile.content` nu `Json` (was tekst); `EmailDraft` kreeg `variant` (`EmailVariant`-enum) en `status`, en verloor zijn `@unique` op `matchId` zodat elke generatie een nieuw record wordt i.p.v. een overschrijving
 
 **Definition of done:**
-- Eenmalig: stijlprofiel opgebouwd uit 2-3+ voorbeeldmails en opgeslagen in
-  `StyleProfile` + `ExampleEmail[]`.
-- `npm run mail -- <matchId>` genereert een `EmailDraft` (onderwerp + body)
-  die de stijl van het profiel volgt.
+- `npm run style-profile` bouwt/vernieuwt het stijlprofiel uit `mail-examples/`
+  en print het leesbaar; slaat profiel + 3 representatieve voorbeelden op.
+- `npm run mail -- <matchId>` genereert een `EmailDraft` (status altijd
+  `concept`) in de stijl van het profiel, gebaseerd op kandidaat + vacature +
+  match — geen verzonnen feiten, geen contactgegevens van de kandidaat.
+- `--variant=korter|formeler|informeler` genereert een alternatief als apart
+  record; niets wordt overschreven.
 - Geen enkel pad in de code verstuurt een e-mail — alleen concept-opslag.
 
-**Status/Geleerd:** _(nog niet gestart)_
+**Status/Geleerd:** Klaar. Echte run: stijlprofiel gebouwd uit 6 voorbeeldmails
+(`--mask`), concept + "korter"-variant gegenereerd voor een echte match — beide
+correct als los record opgeslagen, inhoud eerlijk (noemt zelf het senioriteits-
+verschil i.p.v. het te verbloemen), geen contactgegevens. `MailInput` bevat
+structureel geen candidate-email/telefoon (niet alleen een promptregel, maar
+domeinen die simpelweg niet meegegeven worden). Eén voorbeeldmail bevatte
+bewust een telefoonnummer/e-mailadres om de waarschuwing + `--mask` echt te
+verifiëren — werkte in één keer goed.
 
 ---
 

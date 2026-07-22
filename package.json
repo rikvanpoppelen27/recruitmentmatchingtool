@@ -13,6 +13,7 @@
     "match": "tsx scripts/match.ts",
     "calibrate": "tsx scripts/calibrate.ts",
     "frontsheet": "tsx scripts/frontsheet.ts",
+    "style-profile": "tsx scripts/style-profile.ts",
     "mail": "tsx scripts/mail.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

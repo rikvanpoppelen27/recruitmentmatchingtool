@@ -199,8 +199,8 @@ model Match {
   rationale     String  @db.Text // tekstuele onderbouwing van de score
   isPromising   Boolean // eindscore >= MATCH_THRESHOLD (env) op het moment van berekenen
 
-  frontsheet Frontsheet?
-  emailDraft EmailDraft?
+  frontsheet  Frontsheet?
+  emailDrafts EmailDraft[]
 
   calculatedAt DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -248,14 +248,20 @@ model FrontsheetTemplate {
 // Mailgeneratie
 // ---------------------------------------------------------------------------
 
-/// Eenmalig per gebruiker opgebouwd stijlprofiel op basis van 2-3 voorbeeldmails.
+/// Eenmalig per gebruiker opgebouwd stijlprofiel op basis van voorbeeldmails.
 model StyleProfile {
   id     String @id @default(cuid())
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  content String @db.Text // tekstueel stijlprofiel, output van lib/ai/bouwStijlprofiel
+  /// Gestructureerd stijlprofiel (JSON), output van lib/ai/style-profile.ts
+  /// (aanhef, toon, zinslengte, structuur, introductiestijlKandidaat,
+  /// afsluiting, typischeFormuleringen, vermijden, onderwerpsregelPatroon).
+  content Json
 
+  /// De 3 door de AI als meest representatief aangewezen voorbeeldmails —
+  /// meegestuurd als few-shot voorbeelden bij mailgeneratie, nooit de
+  /// volledige mailhistorie (tokenverbruik).
   exampleEmails ExampleEmail[]
 
   createdAt DateTime @default(now())
@@ -273,17 +279,35 @@ model ExampleEmail {
   createdAt DateTime @default(now())
 }
 
+/// Variant van een conceptmail. "standaard" is de eerste, ongevraagde
+/// generatie; de overige zijn expliciet aangevraagde alternatieven.
+enum EmailVariant {
+  STANDAARD
+  KORTER
+  FORMELER
+  INFORMELER
+}
+
 /// Concept-introductiemail per kansrijke match. Wordt nooit automatisch
-/// verstuurd — alleen concept, met kopieerknop in het dashboard.
+/// verstuurd — alleen concept, met kopieerknop in het dashboard. Geen
+/// `@unique` op matchId: een nieuwe generatie (of variant) voor dezelfde
+/// match maakt een nieuw record aan, zodat concepten vergeleken kunnen
+/// worden i.p.v. overschreven.
 model EmailDraft {
   id      String @id @default(cuid())
-  matchId String @unique
+  matchId String
   match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
 
   subject String
-  body    String @db.Text
+  body    String       @db.Text
+  variant EmailVariant @default(STANDAARD)
+
+  /// Blijft in deze fase altijd "concept" — er is geen verzendpad.
+  status String @default("concept")
 
   generatedAt DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([matchId])
 }
