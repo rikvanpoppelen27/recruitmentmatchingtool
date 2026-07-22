@@ -1,7 +1,11 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-const TEMPLATE_PATH = path.join(__dirname, "..", "..", "..", "templates", "frontsheet.html");
+// process.cwd() i.p.v. __dirname: onder Next.js (webpack/Turbopack-bundeling
+// van route handlers) wijst __dirname naar een gebundelde locatie in .next/,
+// niet naar de bron — process.cwd() is zowel bij `tsx scripts/...` als bij
+// `next dev`/`next start` de projectroot.
+const TEMPLATE_PATH = path.join(process.cwd(), "templates", "frontsheet.html");
 
 export function escapeHtml(value: string): string {
   return value

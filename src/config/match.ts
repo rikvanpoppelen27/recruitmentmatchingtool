@@ -1,7 +1,18 @@
 /**
  * Instelbare knoppen voor de matching-engine. Bijstellen op basis van
  * `npm run calibrate` — geen logica hoeft hiervoor herschreven te worden.
+ * Vanaf fase 6 ook aanpasbaar via /instellingen (zie lib/settings.ts), met
+ * deze waarden als fallback wanneer er geen databaseoverride is.
  */
+export interface MatchConfig {
+  skillWeight: number;
+  semanticWeight: number;
+  mustHaveWeight: number;
+  niceToHaveWeight: number;
+  knockOutCapScore: number;
+  aiCallMustHaveThreshold: number;
+}
+
 export const matchConfig = {
   /** Gewicht van laag 1 (skills) en laag 2 (semantisch) in de eindscore. Telt op tot 1. */
   skillWeight: 0.4,
@@ -22,4 +33,4 @@ export const matchConfig = {
    * must-have-dekking uit laag 1 dit percentage haalt.
    */
   aiCallMustHaveThreshold: 0.5,
-} as const;
+} satisfies MatchConfig;

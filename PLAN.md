@@ -25,7 +25,7 @@ voor projectomschrijving en installatie.
 | 3    | Matching-engine                     | Klaar |
 | 4    | Frontsheet + PDF-generatie          | Klaar |
 | 5    | Stijlprofiel + mailgeneratie        | Klaar |
-| 6    | Dashboard                           | Nog niet gestart |
+| 6    | Dashboard                           | Klaar |
 | 7    | Multi-user (stub)                   | Nog niet gestart |
 
 ---
@@ -225,21 +225,44 @@ verifiëren — werkte in één keer goed.
 voor de presentatie-PDF; mailconcept met kopieerknop.
 
 **Bestanden:**
-- `src/app/` — Next.js pagina's: vacatures, kandidaten, matches, match-detail
-- `src/app/api/` — API routes die de fase 1-5 lib-functies aanroepen (geen
-  nieuwe business-logica, alleen ontsluiting voor de UI)
-- Tailwind CSS + shadcn/ui componenten (nu pas toevoegen — niet vooruitlopen
-  in eerdere fases)
+- `src/app/` — Next.js App Router-pagina's: overzicht, vacatures, kandidaten
+  (+detail, +upload), matches (+detail), instellingen
+- `src/app/api/` — Route handlers (import/match/frontsheet/mail/settings) die
+  uitsluitend bestaande `lib/`-functies aanroepen, Zod-gevalideerd
+- `src/lib/import/runImport.ts`, `src/lib/cv/processCvUpload.ts`,
+  `src/lib/match/runMatching.ts`, `src/lib/pdf/generateFrontsheet.ts`,
+  `src/lib/mail/generateMailDraft.ts`, `src/lib/mail/buildStyleProfile.ts` —
+  orchestratielogica geëxtraheerd uit de bestaande CLI-scripts (fase 1-5) naar
+  `lib/`, zodat CLI en dashboard gegarandeerd hetzelfde resultaat geven;
+  scripts zijn nu dunne wrappers eromheen
+- `src/lib/settings.ts` — leest/schrijft `AppSettings` (nieuw Prisma-model),
+  met `config/match.ts`/`config/branding.ts` als fallback; `score.ts` en
+  `merge.ts` accepteren nu optioneel een config-object (default = bestaand
+  gedrag) zodat databasewaarden zonder CLI-breuk kunnen worden meegegeven
+- `src/lib/storage/supabase.ts` — additief `createSignedUrl` (kortlevend,
+  bucket blijft privé)
+- Tailwind + een handmatige, shadcn-achtige mini UI-kit (`src/components/ui/`)
 
 **Definition of done:**
-- Vacature-overzicht, kandidaat-overzicht en kansrijke-matches-overzicht
-  werken tegen de bestaande database.
-- Match-detailpagina toont score, onderbouwing, downloadknop voor de
-  presentatie-PDF en het mailconcept met kopieerknop.
-- Geen directe Anthropic/Adzuna-calls vanuit de browser — alles via API
-  routes server-side.
+- Alle pagina's werken tegen de bestaande database; Server Components voor
+  het lezen, kleine Client Components alleen waar interactie nodig is
+  (uploaden, filteren, genereren, bewerken).
+- Match-detailpagina toont score, deelscores, onderbouwing, gematchte/
+  ontbrekende skills (must-have visueel onderscheiden), frontsheet-generatie
+  met inline preview + download, en mailgeneratie met bewerkbare varianten +
+  los kopiëren van onderwerp/body — nergens een verzendknop.
+- Geen directe Anthropic/Adzuna/Supabase-service-role-calls vanuit de browser
+  — alles via server-side route handlers; CV's/presentaties altijd via
+  kortlevende signed URLs.
 
-**Status/Geleerd:** _(nog niet gestart)_
+**Status/Geleerd:** Klaar. Alle 6 pagina's + route handlers echt getest tegen
+`npm run dev` (geen simulatie): matchen, frontsheet genereren, mailconcept
+genereren/bewerken/opslaan, CV uploaden en contactgegevens bewerken werkten
+allemaal via echte HTTP-aanroepen met echte AI/Storage-calls. Eén bug
+gevonden: `__dirname`-gebaseerde padopbouw (template/output/mail-examples)
+werkte onder `tsx` maar niet onder Next.js' gebundelde route handlers — opgelost
+door overal naar `process.cwd()` te gaan. Tests blijven groen (69/69) doordat
+CLI-scripts zijn omgebouwd tot dunne wrappers rond de nieuwe `lib/`-functies.
 
 ---
 

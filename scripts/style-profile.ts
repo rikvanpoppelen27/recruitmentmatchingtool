@@ -1,16 +1,9 @@
 import "dotenv/config";
 
-import path from "node:path";
-
-import { Prisma } from "@prisma/client";
-
-import { bouwStijlprofiel } from "../src/lib/ai/style-profile";
 import { prisma } from "../src/lib/db/prisma";
-import { importExampleEmails, type ParsedExampleEmail } from "../src/lib/mail/import-examples";
+import { rebuildStyleProfile } from "../src/lib/mail/buildStyleProfile";
+import type { ParsedExampleEmail } from "../src/lib/mail/import-examples";
 import type { StyleProfileContent } from "../src/lib/validation/mail";
-
-const MAIL_EXAMPLES_DIR = path.join(__dirname, "..", "mail-examples");
-const DEFAULT_USER_EMAIL = "recruiter@example.com";
 
 function printProfile(profile: StyleProfileContent, representativeExamples: ParsedExampleEmail[]) {
   console.log("\n=== Stijlprofiel ===");
@@ -29,41 +22,13 @@ function printProfile(profile: StyleProfileContent, representativeExamples: Pars
 async function main() {
   const mask = process.argv.includes("--mask");
 
-  const { examples, warnings } = await importExampleEmails(MAIL_EXAMPLES_DIR, { maskContactInfo: mask });
+  const result = await rebuildStyleProfile({ maskContactInfo: mask });
 
-  for (const warning of warnings) {
+  for (const warning of result.warnings) {
     console.warn(`⚠ ${warning}`);
   }
 
-  if (examples.length === 0) {
-    console.error(`Geen voorbeeldmails gevonden in "${MAIL_EXAMPLES_DIR}", kan geen stijlprofiel opbouwen.`);
-    process.exitCode = 1;
-    return;
-  }
-
-  const { profile, representativeExamples } = await bouwStijlprofiel(examples);
-
-  const user = await prisma.user.findUniqueOrThrow({ where: { email: DEFAULT_USER_EMAIL } });
-
-  const exampleEmailData = representativeExamples.map((e) => ({
-    subject: e.subject ?? "(geen onderwerpsregel)",
-    body: e.body,
-  }));
-
-  await prisma.styleProfile.upsert({
-    where: { userId: user.id },
-    create: {
-      userId: user.id,
-      content: profile as unknown as Prisma.InputJsonValue,
-      exampleEmails: { create: exampleEmailData },
-    },
-    update: {
-      content: profile as unknown as Prisma.InputJsonValue,
-      exampleEmails: { deleteMany: {}, create: exampleEmailData },
-    },
-  });
-
-  printProfile(profile, representativeExamples);
+  printProfile(result.profile, result.representativeExamples);
 }
 
 main()

@@ -311,3 +311,30 @@ model EmailDraft {
 
   @@index([matchId])
 }
+
+// ---------------------------------------------------------------------------
+// Instellingen (fase 6 — /instellingen)
+// ---------------------------------------------------------------------------
+
+/// Eén rij met door de gebruiker aangepaste instellingen. Elk veld is
+/// optioneel: null betekent "gebruik de standaardwaarde uit config/match.ts
+/// resp. config/branding.ts". Single-user (fase 7 voegt hier userId aan
+/// toe); tot die tijd bestaat er precies één rij met id "singleton".
+model AppSettings {
+  id String @id @default("singleton")
+
+  matchThreshold          Int?
+  skillWeight             Float?
+  semanticWeight          Float?
+  mustHaveWeight          Float?
+  niceToHaveWeight        Float?
+  knockOutCapScore        Int?
+  aiCallMustHaveThreshold Float?
+
+  anonymizeCV Boolean?
+  companyName String?
+  footerText  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

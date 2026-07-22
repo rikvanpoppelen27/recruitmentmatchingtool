@@ -1,4 +1,4 @@
-import { matchConfig } from "../../config/match";
+import { matchConfig, type MatchConfig } from "../../config/match";
 import type { SkillMatchResult } from "./skills";
 
 export interface CombinedMatchResult {
@@ -11,17 +11,22 @@ export interface CombinedMatchResult {
   isPromising: boolean;
 }
 
-/** Laag 1-score (0-100), gewogen naar must-haves zwaarder dan nice-to-haves. */
-export function computeSkillScore(skillResult: SkillMatchResult): number {
+/**
+ * Laag 1-score (0-100), gewogen naar must-haves zwaarder dan nice-to-haves.
+ * `config` is optioneel en valt terug op config/match.ts — zo kan fase 6's
+ * /instellingen-pagina een uit de database opgehaalde config meegeven zonder
+ * dat CLI-aanroepen (scripts/match.ts) hoeven te veranderen.
+ */
+export function computeSkillScore(skillResult: SkillMatchResult, config: MatchConfig = matchConfig): number {
   const raw =
-    skillResult.mustHaveCoverage * matchConfig.mustHaveWeight * 100 +
-    skillResult.niceToHaveCoverage * matchConfig.niceToHaveWeight * 100;
+    skillResult.mustHaveCoverage * config.mustHaveWeight * 100 +
+    skillResult.niceToHaveCoverage * config.niceToHaveWeight * 100;
   return Math.round(raw);
 }
 
 /** Voordrempel: is de must-have-dekking hoog genoeg om de (dure) AI-laag aan te roepen? */
-export function shouldCallSemanticLayer(skillResult: SkillMatchResult): boolean {
-  return skillResult.mustHaveCoverage >= matchConfig.aiCallMustHaveThreshold;
+export function shouldCallSemanticLayer(skillResult: SkillMatchResult, config: MatchConfig = matchConfig): boolean {
+  return skillResult.mustHaveCoverage >= config.aiCallMustHaveThreshold;
 }
 
 /**
@@ -35,6 +40,7 @@ export function combineScores(
   semanticScore: number | null,
   semanticRationale: string | null,
   matchThreshold: number,
+  config: MatchConfig = matchConfig,
 ): CombinedMatchResult {
   let finalScore: number;
   let rationale: string;
@@ -44,14 +50,14 @@ export function combineScores(
     rationale =
       `Semantische laag overgeslagen: must-have-dekking ` +
       `(${Math.round(skillResult.mustHaveCoverage * 100)}%) lag onder de voordrempel van ` +
-      `${Math.round(matchConfig.aiCallMustHaveThreshold * 100)}%. Score is uitsluitend gebaseerd op skill-matching.`;
+      `${Math.round(config.aiCallMustHaveThreshold * 100)}%. Score is uitsluitend gebaseerd op skill-matching.`;
   } else {
-    finalScore = Math.round(skillScore * matchConfig.skillWeight + semanticScore * matchConfig.semanticWeight);
+    finalScore = Math.round(skillScore * config.skillWeight + semanticScore * config.semanticWeight);
     rationale = semanticRationale ?? "";
   }
 
   if (!skillResult.hasAllMustHaves) {
-    finalScore = Math.min(finalScore, matchConfig.knockOutCapScore);
+    finalScore = Math.min(finalScore, config.knockOutCapScore);
   }
 
   return {

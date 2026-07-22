@@ -120,3 +120,18 @@ export async function uploadFile(bucket: string, path: string, buffer: Buffer, m
   }
   return path;
 }
+
+// ---------------------------------------------------------------------------
+// Signed URLs (fase 6 — dashboard): buckets blijven privé, de UI krijgt
+// alleen kortlevende, server-side gegenereerde download-links te zien.
+// ---------------------------------------------------------------------------
+
+/** Genereert een kortlevende signed URL voor een bestand in een private bucket. */
+export async function createSignedUrl(bucket: string, path: string, expiresInSeconds: number): Promise<string> {
+  const supabase = getServiceClient();
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresInSeconds);
+  if (error || !data) {
+    throw new Error(`Kon geen signed URL genereren voor "${bucket}/${path}": ${error?.message ?? "onbekende fout"}`);
+  }
+  return data.signedUrl;
+}

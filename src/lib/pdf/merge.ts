@@ -146,11 +146,16 @@ function getCvsBucketName(): string {
 /**
  * Haalt het originele CV op uit Supabase Storage en levert het als PDF-buffer
  * (DOCX wordt via LibreOffice geconverteerd). Past optioneel anonimisering
- * toe volgens `config/branding.ts` (`anonymizeCV`) — betrouwbaar voor DOCX,
- * voor PDF-bronnen wordt in plaats daarvan een expliciete waarschuwing
- * teruggegeven (zie modulecommentaar bij `redactDocx`).
+ * toe — betrouwbaar voor DOCX, voor PDF-bronnen wordt in plaats daarvan een
+ * expliciete waarschuwing teruggegeven (zie modulecommentaar bij
+ * `redactDocx`). `anonymizeCV` valt terug op `config/branding.ts` zodat
+ * bestaande CLI-aanroepen ongewijzigd blijven werken; fase 6's
+ * /instellingen-pagina geeft hier de uit de database opgehaalde waarde door.
  */
-export async function prepareCvAsPdf(candidate: CandidateCvInfo): Promise<PreparedCv> {
+export async function prepareCvAsPdf(
+  candidate: CandidateCvInfo,
+  anonymizeCV: boolean = branding.anonymizeCV,
+): Promise<PreparedCv> {
   const bucket = getCvsBucketName();
   const originalBuffer = await downloadFile(bucket, candidate.cvFileUrl);
   const isDocx = candidate.cvMimeType === DOCX_MIME_TYPE;
@@ -159,7 +164,7 @@ export async function prepareCvAsPdf(candidate: CandidateCvInfo): Promise<Prepar
     let bufferToConvert = originalBuffer;
     let warnings: string[] = [];
 
-    if (branding.anonymizeCV) {
+    if (anonymizeCV) {
       const redaction = await redactDocx(originalBuffer, { email: candidate.email, phone: candidate.phone });
       bufferToConvert = redaction.buffer;
       warnings = redaction.warnings;
@@ -174,7 +179,7 @@ export async function prepareCvAsPdf(candidate: CandidateCvInfo): Promise<Prepar
   // contactgegevens nog steeds extraheerbaar laten — dat is gevaarlijker dan
   // waarschuwen, dus expliciet melden i.p.v. stilzwijgend niets doen.
   const warnings: string[] = [];
-  if (branding.anonymizeCV) {
+  if (anonymizeCV) {
     warnings.push(
       "Anonimisering staat aan, maar betrouwbare tekst-redactie in CV's die al als PDF zijn " +
         "aangeleverd is niet geïmplementeerd (alleen voor DOCX-bronnen). Contactgegevens staan nog " +
