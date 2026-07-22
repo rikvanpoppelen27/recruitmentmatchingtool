@@ -5,6 +5,9 @@ import { Select } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { prisma } from "@/lib/db/prisma";
 
+import { AddVacancyDialog } from "./add-vacancy-dialog";
+import { SourceBadge } from "./source-badge";
+
 const PAGE_SIZE = 50;
 
 interface VacaturesPageProps {
@@ -63,9 +66,12 @@ export default async function VacaturesPage({ searchParams }: VacaturesPageProps
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold text-neutral-900">Vacatures</h1>
-        <p className="mt-1 text-sm text-neutral-500">{total} vacature(s) gevonden.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-neutral-900">Vacatures</h1>
+          <p className="mt-1 text-sm text-neutral-500">{total} vacature(s) gevonden.</p>
+        </div>
+        <AddVacancyDialog />
       </div>
 
       <form method="get" className="flex flex-wrap items-end gap-4 rounded-lg border border-neutral-200 bg-white p-4">
@@ -124,6 +130,7 @@ export default async function VacaturesPage({ searchParams }: VacaturesPageProps
             <TableHead>Provincie</TableHead>
             <TableHead>Datum</TableHead>
             <TableHead>Bron</TableHead>
+            <TableHead>Link</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -135,20 +142,27 @@ export default async function VacaturesPage({ searchParams }: VacaturesPageProps
               <TableCell>{vacancy.region}</TableCell>
               <TableCell>{vacancy.importedAt.toLocaleDateString("nl-NL")}</TableCell>
               <TableCell>
-                <a
-                  href={vacancy.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-neutral-700 underline"
-                >
-                  Bekijken
-                </a>
+                <SourceBadge source={vacancy.source} sourceUrl={vacancy.sourceUrl} />
+              </TableCell>
+              <TableCell>
+                {vacancy.url ? (
+                  <a
+                    href={vacancy.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-neutral-700 underline"
+                  >
+                    Bekijken
+                  </a>
+                ) : (
+                  <span className="text-neutral-300">—</span>
+                )}
               </TableCell>
             </TableRow>
           ))}
           {vacancies.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} className="py-8 text-center text-neutral-400">
+              <TableCell colSpan={7} className="py-8 text-center text-neutral-400">
                 Geen vacatures gevonden voor deze filters.
               </TableCell>
             </TableRow>

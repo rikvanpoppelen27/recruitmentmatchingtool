@@ -276,7 +276,7 @@ verfijning van frontsheets, mailtemplates, en een visuele opfrisbeurt.
 
 **Onderdelen (bouwvolgorde, elk met bevestiging vóór het volgende):**
 1. Datamodel-uitbreidingen — **Klaar**
-2. Handmatige vacature-invoer + bronherkenning — nog niet gestart
+2. Handmatige vacature-invoer + bronherkenning — **Klaar**
 3. Zoekprofielen (booleaanse query + 12 provincies, config/import.ts leeggemaakt) — nog niet gestart
 4. Shortlist (plus-knop, optimistische UI) — nog niet gestart
 5. Automatisering (matchen → primaire match → frontsheet + mail, kostenbeheersing/wachtrij) — nog niet gestart
@@ -302,8 +302,24 @@ verfijning van frontsheets, mailtemplates, en een visuele opfrisbeurt.
   (69/69); geverifieerd dat bestaande vacatures hun `importSource` correct
   behielden en de nieuwe velden zinnige defaults kregen.
 
-**Status/Geleerd:** Bezig — onderdeel 1 van 9 klaar, wacht op bevestiging
-voor onderdeel 2.
+**Onderdeel 2 — Handmatige vacature-invoer (Klaar):**
+- `lib/sources/detect-source.ts` — losse, testbare bronherkenning op een
+  uitbreidbare domein→bron-map (fragment-matching, dus `indeed.` vangt ook
+  `indeed.nl`/`.co.uk`); ongeldige URL of geen URL faalt niet, valt netjes
+  terug op `other`/`manual`.
+- `lib/vacancy/createManualVacancy.ts` — dedupliceert met dezelfde
+  `computeDedupeHash` als fase 1 (geen nieuwe ontdubbelingslogica), roept bij
+  een nieuwe vacature meteen `analyseVacature` (fase 3) aan.
+- Dialoogvenster (`AddVacancyDialog`) + bronbadge (gekleurd label i.p.v.
+  gedownload merklogo) op `/vacatures`; "Bekijken"-link nu conditioneel
+  (lege `url` bij geen opgegeven bron-URL).
+- Echte run: vacature aangemaakt via `POST /api/vacancies` met een
+  LinkedIn-URL → bron correct herkend, skills/must-haves/seniority direct
+  ingevuld door Claude; nogmaals hetzelfde ingestuurd → duplicaatmelding i.p.v.
+  dubbele opslag. Tests groen (75/75, 6 nieuw voor detectSource).
+
+**Status/Geleerd:** Bezig — onderdeel 2 van 9 klaar, wacht op bevestiging
+voor onderdeel 3 (zoekprofielen).
 
 ---
 
