@@ -266,6 +266,47 @@ CLI-scripts zijn omgebouwd tot dunne wrappers rond de nieuwe `lib/`-functies.
 
 ---
 
+## Fase 6B — Shortlist-workflow, handmatige vacatures & UI-verfijning
+
+**Doel:** shortlist-workflow (plus-knop op /vacatures → automatisch matchen +
+frontsheet + mail voor de topkandidaat), handmatige vacature-invoer met
+bronherkenning, volledig instelbare zoekprofielen (booleaans + alle 12
+provincies i.p.v. hardcoded front-end/Noord-Holland/Zuid-Holland), chat-
+verfijning van frontsheets, mailtemplates, en een visuele opfrisbeurt.
+
+**Onderdelen (bouwvolgorde, elk met bevestiging vóór het volgende):**
+1. Datamodel-uitbreidingen — **Klaar**
+2. Handmatige vacature-invoer + bronherkenning — nog niet gestart
+3. Zoekprofielen (booleaanse query + 12 provincies, config/import.ts leeggemaakt) — nog niet gestart
+4. Shortlist (plus-knop, optimistische UI) — nog niet gestart
+5. Automatisering (matchen → primaire match → frontsheet + mail, kostenbeheersing/wachtrij) — nog niet gestart
+6. Overzichtspagina `/` als werkbank — nog niet gestart
+7. Frontsheet-chatverfijning (`FrontsheetRevision`) — nog niet gestart
+8. Mailtemplates in instellingen — nog niet gestart
+9. Vormgeving (design tokens, Morgan Black-stijl) — nog niet gestart
+
+**Onderdeel 1 — Datamodel (Klaar):**
+- `Vacancy.source` (oud: welke import-adapter) hernoemd naar `importSource`
+  (`JobSource`-enum, nu ook met `MANUAL`) — bestaande data behouden via
+  `RENAME COLUMN`, geen backfill nodig (alle 18 bestaande rijen waren al
+  `ADZUNA`).
+- Nieuw `Vacancy.source` (`VacancySource`: ADZUNA/LINKEDIN/INDEED/MANUAL/
+  OTHER) — de door de recruiter zichtbare herkomst, default `ADZUNA`.
+- Nieuw: `Vacancy.sourceUrl`, `contactPerson`, `createdBy` (`CreatedBy`-enum),
+  `isShortlisted`, `shortlistedAt`.
+- `Match.isPrimary` (boolean, default false).
+- Nieuwe modellen `FrontsheetRevision` (matchId, instruction, resultJson,
+  createdAt) en `MailTemplate` (name, description, systemInstruction,
+  isDefault).
+- Migratie `20260722224046_fase6b_datamodel` toegepast; tests blijven groen
+  (69/69); geverifieerd dat bestaande vacatures hun `importSource` correct
+  behielden en de nieuwe velden zinnige defaults kregen.
+
+**Status/Geleerd:** Bezig — onderdeel 1 van 9 klaar, wacht op bevestiging
+voor onderdeel 2.
+
+---
+
 ## Fase 7 — Multi-user (stub)
 
 **Doel:** dit is bij aanvang **alleen een stub-beschrijving**, geen

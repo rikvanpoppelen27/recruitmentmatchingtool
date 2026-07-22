@@ -79,7 +79,7 @@ export async function runImport(): Promise<ImportSummary> {
     await prisma.vacancy.createMany({
       data: toInsert.map((vacancy) => ({
         marketId: market.id,
-        source: vacancy.source,
+        importSource: vacancy.source,
         externalId: vacancy.externalId,
         region: vacancy.region,
         companyName: vacancy.companyName,

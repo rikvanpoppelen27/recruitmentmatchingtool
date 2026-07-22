@@ -53,11 +53,32 @@ model Market {
 // Vacature-import
 // ---------------------------------------------------------------------------
 
-/// Bron van een vacature. Adzuna is de eerste adapter; Jobfeed volgt later
-/// zonder dat de rest van het model hoeft te veranderen.
+/// Welke import-adapter een vacature heeft opgehaald. Adzuna is de eerste
+/// adapter; Jobfeed volgt later. MANUAL = niet via een adapter opgehaald
+/// (handmatig ingevoerd, fase 6B). Dit is een technisch/pipeline-gegeven —
+/// niet te verwarren met `Vacancy.source` hieronder, dat de door de
+/// recruiter zichtbare herkomst (LinkedIn, Indeed, ...) beschrijft.
 enum JobSource {
   ADZUNA
   JOBFEED
+  MANUAL
+}
+
+/// Herkende/opgegeven herkomst van een vacature zoals getoond in de UI
+/// (bronicoon op /vacatures). Automatisch afgeleid uit de URL bij handmatige
+/// invoer (lib/sources/detect-source.ts), of ADZUNA bij een importrun.
+enum VacancySource {
+  ADZUNA
+  LINKEDIN
+  INDEED
+  MANUAL
+  OTHER
+}
+
+/// Hoe de vacature-rij is ontstaan: via een importrun of handmatig ingevoerd.
+enum CreatedBy {
+  IMPORT
+  MANUAL
 }
 
 model Vacancy {
@@ -65,9 +86,9 @@ model Vacancy {
   marketId String
   market   Market    @relation(fields: [marketId], references: [id], onDelete: Cascade)
 
-  source     JobSource
-  externalId String // id van de vacature bij de bron
-  region     String // regio waarvoor deze call is uitgevoerd (bv. "Noord-Holland")
+  importSource JobSource
+  externalId   String // id van de vacature bij de bron; synthetisch (manual-<cuid>) bij handmatige invoer
+  region       String // regio waarvoor deze call is uitgevoerd (bv. "Noord-Holland")
 
   companyName           String
   companyNameNormalized String // voor ontdubbeling
@@ -93,6 +114,14 @@ model Vacancy {
   isActive Boolean @default(true)
   rawData  Json? // ruwe brondata, voor debugging/herverwerking
 
+  // --- Fase 6B: handmatige invoer + shortlist-workflow ---
+  source        VacancySource @default(ADZUNA)
+  sourceUrl     String?
+  contactPerson String?
+  createdBy     CreatedBy     @default(IMPORT)
+  isShortlisted Boolean       @default(false)
+  shortlistedAt DateTime?
+
   matches Match[]
 
   importedAt DateTime @default(now())
@@ -102,7 +131,8 @@ model Vacancy {
   updatedAt  DateTime @updatedAt
 
   @@index([marketId])
-  @@index([source, externalId])
+  @@index([importSource, externalId])
+  @@index([isShortlisted])
 }
 
 // ---------------------------------------------------------------------------
@@ -199,8 +229,14 @@ model Match {
   rationale     String  @db.Text // tekstuele onderbouwing van de score
   isPromising   Boolean // eindscore >= MATCH_THRESHOLD (env) op het moment van berekenen
 
-  frontsheet  Frontsheet?
-  emailDrafts EmailDraft[]
+  /// Markeert de hoogst scorende kandidaat (>= drempel) voor een geshortliste
+  /// vacature (fase 6B) — deze match krijgt automatisch frontsheet + mail.
+  /// Handmatig te wisselen als er meerdere kandidaten boven de drempel zitten.
+  isPrimary Boolean @default(false)
+
+  frontsheet         Frontsheet?
+  emailDrafts        EmailDraft[]
+  frontsheetRevisions FrontsheetRevision[]
 
   calculatedAt DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -228,6 +264,25 @@ model Frontsheet {
   generatedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+/// Eén ronde chatverfijning van een frontsheet (fase 6B): mijn instructie in
+/// gewone taal + de resulterende (opnieuw complete) frontsheet-inhoud. Vormt
+/// samen een geschiedenis waarmee je naar een eerdere versie kunt teruggaan.
+model FrontsheetRevision {
+  id      String @id @default(cuid())
+  matchId String
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  /// Mijn wijzigingsverzoek, bv. "maak de samenvatting korter".
+  instruction String @db.Text
+  /// Volledige frontsheet-inhoud (zelfde vorm als Frontsheet.content) na
+  /// toepassing van deze instructie.
+  resultJson Json
+
+  createdAt DateTime @default(now())
+
+  @@index([matchId])
 }
 
 /// Vast document-template per gebruiker (fase 7: per gebruiker instelbaar;
@@ -277,6 +332,22 @@ model ExampleEmail {
   body    String @db.Text
 
   createdAt DateTime @default(now())
+}
+
+/// Herbruikbare instructie voor genereerMail (fase 6B), te kiezen per match
+/// in het mailpaneel. Eén template is `isDefault` en wordt gebruikt door de
+/// shortlist-automatisering (stap 3, alleen bij een primaire match).
+model MailTemplate {
+  id                String  @id @default(cuid())
+  name              String
+  description       String?
+  /// Instructie die aan genereerMail wordt meegegeven, bv. "korte
+  /// introductiemail aan een bekende opdrachtgever, informeel, max. 150 woorden".
+  systemInstruction String  @db.Text
+  isDefault         Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 /// Variant van een conceptmail. "standaard" is de eerste, ongevraagde
