@@ -23,7 +23,7 @@ voor projectomschrijving en installatie.
 | 1    | Adzuna-import + ontdubbeling        | Klaar |
 | 2    | CV-upload + parsing                 | Klaar |
 | 3    | Matching-engine                     | Klaar |
-| 4    | Frontsheet + PDF-generatie          | Nog niet gestart |
+| 4    | Frontsheet + PDF-generatie          | Klaar |
 | 5    | Stijlprofiel + mailgeneratie        | Nog niet gestart |
 | 6    | Dashboard                           | Nog niet gestart |
 | 7    | Multi-user (stub)                   | Nog niet gestart |
@@ -154,22 +154,31 @@ kandidaat, waarom deze match, relevante ervaring) op basis van een vast
 template, als PDF, samengevoegd met het originele CV (frontsheet eerst).
 
 **Bestanden:**
-- `templates/frontsheet.html` — vast HTML-document-template
-- `src/lib/ai/genereerFrontsheet.ts` — match + kandidaat + vacature → invulvelden voor het template
-- `src/lib/pdf/generateFrontsheetPdf.ts` — HTML → PDF via Playwright (headless Chromium)
-- `src/lib/pdf/mergePdf.ts` — frontsheet-PDF + CV → presentatie-PDF via pdf-lib
-- `scripts/frontsheet.ts` — CLI: `npm run frontsheet -- <matchId>`
+- `templates/frontsheet.html` — A4-printtemplate met `{{placeholder}}`'s (zie comment bovenin)
+- `src/config/branding.ts` — bureaunaam/logo/kleur/voettekst + `anonymizeCV`-vlag
+- `src/lib/pdf/template.ts` — placeholder-vervanging + escaping (puur, testbaar)
+- `src/lib/ai/frontsheet.ts` (`genereerFrontsheet`) — match + kandidaat + vacature → invulvelden, met woordlimieten in code
+- `src/lib/pdf/render.ts` — HTML → PDF via Playwright, één hergebruikte browser-instantie
+- `src/lib/pdf/merge.ts` — CV ophalen, DOCX→PDF (LibreOffice), optionele anonimisering, samenvoegen (pdf-lib)
+- `src/lib/storage/supabase.ts` — additief uitgebreid met generieke download/upload/ensureBucket (fase 2 ongewijzigd)
+- `scripts/frontsheet.ts` — CLI: `npm run frontsheet -- <matchId>` of `-- --all-kansrijk`
+- `tests/frontsheet.test.ts` — template-invulling, lengtebegrenzing, merge-volgorde
 
 **Definition of done:**
 - `npm run frontsheet -- <matchId>` genereert de frontsheet-inhoud, rendert
-  deze naar PDF, voegt 'm samen met het CV (frontsheet eerst) en slaat beide
-  PDF's op in Supabase Storage; `Frontsheet`-record wordt bijgewerkt.
-- Als `Candidate.userId` se `User.anonymizeCandidateInPdf` aanstaat, worden
-  contactgegevens in het CV vóór samenvoegen geanonimiseerd.
-- Presentatie-PDF is visueel gecontroleerd: frontsheet-pagina('s) eerst,
-  daarna het originele CV.
+  deze naar PDF, voegt 'm samen met het CV (frontsheet eerst) en uploadt het
+  resultaat naar de presentations-bucket; `Frontsheet`-record wordt bijgewerkt.
+- `anonymizeCV` in `config/branding.ts` verwijdert contactgegevens betrouwbaar
+  bij DOCX-bronnen (tekstvervanging vóór PDF-conversie); bij PDF-bronnen wordt
+  expliciet gewaarschuwd i.p.v. een onbetrouwbare visuele overlay te doen.
+- Presentatie-PDF gecontroleerd: frontsheet-pagina('s) eerst, daarna het CV.
 
-**Status/Geleerd:** _(nog niet gestart)_
+**Status/Geleerd:** Klaar. Echte run geverifieerd (Jan Jansen × Yellowtail
+Conclusion, 2 pagina's, geüpload + pad opgeslagen). Handmatige inhoudscontrole
+ving een verzonnen "vier à vijf jaar ervaring" (opgeteld uit periodes) —
+expliciet verbod hierop toegevoegd aan de systeemprompt, opgelost. DOCX→PDF
+(LibreOffice) is gebouwd maar niet live getest: ontbreekt op deze machine en
+beide testkandidaten hebben een PDF-CV.
 
 ---
 

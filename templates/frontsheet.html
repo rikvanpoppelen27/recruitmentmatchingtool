@@ -1,1 +1,174 @@
-<!-- Fase 4 — vast HTML-document-template voor frontsheet-generatie (invulvelden via {{ }} o.i.d.). -->
+<!--
+  Frontsheet-template. Vervangen door lib/pdf/template.ts (eenvoudige
+  placeholder-vervanging, geen template-engine-dependency). Beschikbare
+  placeholders:
+
+    {{logoUrl}}               - bureaulogo, data-URI of pad (config/branding.ts)
+    {{companyName}}           - bureaunaam (config/branding.ts)
+    {{primaryColor}}          - huisstijlkleur, hex (config/branding.ts)
+    {{candidateName}}         - volledige naam kandidaat
+    {{vacancyTitle}}          - functietitel van de vacature
+    {{vacancyCompany}}        - opdrachtgever (bedrijfsnaam vacature)
+    {{summary}}               - AI: samenvatting kandidaat
+    {{whyThisMatch}}          - AI: waarom deze match
+    {{experienceBulletsHtml}} - AI: relevante ervaring, kant-en-klare <li>-items
+    {{skillsHtml}}            - skills van de kandidaat, kant-en-klare <li>-items
+    {{educationHtml}}         - opleidingen, kant-en-klare <li>-items
+    {{languages}}             - talen, kommagescheiden tekst
+    {{availability}}          - beschikbaarheid (of "Niet vermeld")
+    {{footerText}}            - voettekst met bureaugegevens (config/branding.ts)
+
+  Pas de HTML/CSS hieronder gerust aan naar de exacte Morgan Black-huisstijl —
+  laat de placeholders hierboven wel intact staan, die worden letterlijk vervangen.
+-->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<title>Frontsheet</title>
+<style>
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Bewust systeemlettertype: geen @font-face/webfonts die offline of
+     zonder netwerktoegang tijdens PDF-rendering kunnen falen. */
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #1a1a1a;
+    font-size: 11pt;
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid {{primaryColor}};
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+    break-inside: avoid;
+  }
+
+  header img {
+    max-height: 40px;
+  }
+
+  header .title {
+    text-align: right;
+  }
+
+  header .title h1 {
+    font-size: 16pt;
+    margin: 0;
+  }
+
+  header .title p {
+    margin: 2px 0 0;
+    color: #555;
+  }
+
+  section {
+    margin-bottom: 16px;
+    break-inside: avoid;
+  }
+
+  h2 {
+    font-size: 10.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: {{primaryColor}};
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 4px;
+    margin: 0 0 8px;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+
+  li {
+    margin-bottom: 4px;
+    break-inside: avoid;
+  }
+
+  .meta-grid {
+    display: flex;
+    gap: 24px;
+  }
+
+  .meta-grid > div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  footer {
+    margin-top: 24px;
+    padding-top: 8px;
+    border-top: 1px solid #ddd;
+    font-size: 8pt;
+    color: #888;
+    break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <img src="{{logoUrl}}" alt="{{companyName}}" />
+    <div class="title">
+      <h1>{{candidateName}}</h1>
+      <p>Voorstel voor: {{vacancyTitle}} bij {{vacancyCompany}}</p>
+    </div>
+  </header>
+
+  <section>
+    <h2>Samenvatting</h2>
+    <p>{{summary}}</p>
+  </section>
+
+  <section>
+    <h2>Waarom deze match</h2>
+    <p>{{whyThisMatch}}</p>
+  </section>
+
+  <section>
+    <h2>Relevante ervaring</h2>
+    <ul>{{experienceBulletsHtml}}</ul>
+  </section>
+
+  <section class="meta-grid">
+    <div>
+      <h2>Skills</h2>
+      <ul>{{skillsHtml}}</ul>
+    </div>
+    <div>
+      <h2>Opleiding</h2>
+      <ul>{{educationHtml}}</ul>
+    </div>
+  </section>
+
+  <section class="meta-grid">
+    <div>
+      <h2>Talen</h2>
+      <p>{{languages}}</p>
+    </div>
+    <div>
+      <h2>Beschikbaarheid</h2>
+      <p>{{availability}}</p>
+    </div>
+  </section>
+
+  <footer>{{footerText}}</footer>
+</body>
+</html>

@@ -16,3 +16,12 @@ export const semanticMatchResultSchema = z.object({
 });
 
 export type SemanticMatchResult = z.infer<typeof semanticMatchResultSchema>;
+
+/** Output van lib/ai/frontsheet.ts (genereerFrontsheet). */
+export const frontsheetContentSchema = z.object({
+  summary: z.string(),
+  whyThisMatch: z.string(),
+  highlightedExperience: z.array(z.string()),
+});
+
+export type FrontsheetContent = z.infer<typeof frontsheetContentSchema>;

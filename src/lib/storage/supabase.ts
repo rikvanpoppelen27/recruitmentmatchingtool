@@ -74,3 +74,49 @@ export async function uploadCvFile(
 
   return path;
 }
+
+// ---------------------------------------------------------------------------
+// Generieke, bucket-parameteriseerbare helpers (fase 4: presentaties-bucket).
+// Additief t.o.v. bovenstaande CV-specifieke functies — die blijven ongewijzigd.
+// ---------------------------------------------------------------------------
+
+/** Maakt een willekeurige bucket aan (private) als deze nog niet bestaat. */
+export async function ensureBucketExists(bucketName: string): Promise<void> {
+  const supabase = getServiceClient();
+
+  const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+  if (listError) {
+    throw new Error(`Kon Supabase Storage buckets niet ophalen: ${listError.message}`);
+  }
+
+  if (buckets?.some((b) => b.name === bucketName)) return;
+
+  const { error: createError } = await supabase.storage.createBucket(bucketName, { public: false });
+  if (createError) {
+    throw new Error(`Kon bucket "${bucketName}" niet aanmaken: ${createError.message}`);
+  }
+}
+
+/** Downloadt een bestand uit een willekeurige (private) bucket. */
+export async function downloadFile(bucket: string, path: string): Promise<Buffer> {
+  const supabase = getServiceClient();
+  const { data, error } = await supabase.storage.from(bucket).download(path);
+  if (error) {
+    throw new Error(`Download uit Supabase Storage mislukt voor "${bucket}/${path}": ${error.message}`);
+  }
+  const arrayBuffer = await data.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+/** Uploadt een bestand naar een willekeurige (private) bucket (upsert). */
+export async function uploadFile(bucket: string, path: string, buffer: Buffer, mimeType: string): Promise<string> {
+  const supabase = getServiceClient();
+  const { error } = await supabase.storage.from(bucket).upload(path, buffer, {
+    contentType: mimeType,
+    upsert: true,
+  });
+  if (error) {
+    throw new Error(`Upload naar Supabase Storage mislukt voor "${bucket}/${path}": ${error.message}`);
+  }
+  return path;
+}

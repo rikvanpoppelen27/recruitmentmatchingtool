@@ -27,6 +27,10 @@ prisma/*.db
 /test-results/
 /playwright-report/
 
+# lokaal gegenereerde presentatie-PDF's (fase 4) — alleen voor eigen inspectie
+/output/*
+!/output/.gitkeep
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
