@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 
 import { genereerFrontsheet, type FrontsheetInput } from "../ai/frontsheet";
 import { prisma } from "../db/prisma";
+import type { FrontsheetContent } from "../validation/ai";
 import { getEffectiveBrandingSettings } from "../settings";
 import { ensureBucketExists, uploadFile } from "../storage/supabase";
 import { mergeFrontsheetWithCv, prepareCvAsPdf } from "./merge";
@@ -46,32 +47,23 @@ export interface GenerateFrontsheetResult {
   warnings: string[];
 }
 
-/**
- * Genereert de frontsheet-inhoud, rendert deze naar PDF, voegt 'm samen met
- * het CV (frontsheet eerst) en uploadt het resultaat naar de
- * presentations-bucket. Gedeelde implementatie voor scripts/frontsheet.ts
- * (CLI) en de "Genereer presentatiedocument"-knop op /matches/[id] (route
- * handler POST /api/matches/[id]/frontsheet). Bureaunaam/voettekst/
- * anonimisering komen uit lib/settings.ts (databaseoverride, anders
- * config/branding.ts).
- */
-export async function generateFrontsheetForMatch(matchId: string): Promise<GenerateFrontsheetResult> {
-  const match = await prisma.match.findUnique({
+type MatchWithRelations = NonNullable<Awaited<ReturnType<typeof fetchMatchWithRelations>>>;
+
+/** Haalt een match op met alle relaties die de frontsheet-pipeline nodig heeft (candidate/vacancy). */
+export async function fetchMatchWithRelations(matchId: string) {
+  return prisma.match.findUnique({
     where: { id: matchId },
     include: {
       candidate: { include: { educations: true, workExperience: true } },
       vacancy: true,
     },
   });
+}
 
-  if (!match) {
-    throw new Error(`Match "${matchId}" niet gevonden.`);
-  }
-
+/** Bouwt de input voor genereerFrontsheet/verfijnFrontsheet uit een opgehaalde match. */
+export function buildFrontsheetInput(match: MatchWithRelations): FrontsheetInput {
   const { candidate, vacancy } = match;
-  const brandingSettings = await getEffectiveBrandingSettings();
-
-  const frontsheetInput: FrontsheetInput = {
+  return {
     candidate: {
       fullName: candidate.fullName,
       yearsExperience: candidate.yearsExperience,
@@ -102,8 +94,24 @@ export async function generateFrontsheetForMatch(matchId: string): Promise<Gener
       rationale: match.rationale,
     },
   };
+}
 
-  const content = await genereerFrontsheet(frontsheetInput);
+/**
+ * Rendert frontsheet-inhoud naar HTML → PDF, voegt 'm samen met het CV
+ * (frontsheet eerst), uploadt naar de presentations-bucket en werkt het
+ * Frontsheet-record bij. Gedeeld door de initiële generatie
+ * (generateFrontsheetForMatch), chatverfijning (refineFrontsheetForMatch) en
+ * het terugzetten van een eerdere versie (restoreFrontsheetRevision) — dit
+ * is precies het stuk dat in alle drie identiek is, alleen de herkomst van
+ * `content` verschilt (nieuw van Claude, verfijnd van Claude, of uit een
+ * eerdere FrontsheetRevision).
+ */
+export async function renderAndPersistFrontsheet(
+  match: MatchWithRelations,
+  content: FrontsheetContent,
+): Promise<GenerateFrontsheetResult> {
+  const { candidate, vacancy } = match;
+  const brandingSettings = await getEffectiveBrandingSettings();
 
   const template = await loadFrontsheetTemplate();
   const html = renderFrontsheetHtml(template, {
@@ -164,4 +172,24 @@ export async function generateFrontsheetForMatch(matchId: string): Promise<Gener
   await writeFile(path.join(OUTPUT_DIR, fileName), mergedPdf);
 
   return { matchId: match.id, storagePath, pageCount, warnings: cvWarnings };
+}
+
+/**
+ * Genereert de frontsheet-inhoud, rendert deze naar PDF, voegt 'm samen met
+ * het CV (frontsheet eerst) en uploadt het resultaat naar de
+ * presentations-bucket. Gedeelde implementatie voor scripts/frontsheet.ts
+ * (CLI) en de "Genereer presentatiedocument"-knop op /matches/[id] (route
+ * handler POST /api/matches/[id]/frontsheet). Bureaunaam/voettekst/
+ * anonimisering komen uit lib/settings.ts (databaseoverride, anders
+ * config/branding.ts).
+ */
+export async function generateFrontsheetForMatch(matchId: string): Promise<GenerateFrontsheetResult> {
+  const match = await fetchMatchWithRelations(matchId);
+  if (!match) {
+    throw new Error(`Match "${matchId}" niet gevonden.`);
+  }
+
+  const frontsheetInput = buildFrontsheetInput(match);
+  const content = await genereerFrontsheet(frontsheetInput);
+  return renderAndPersistFrontsheet(match, content);
 }

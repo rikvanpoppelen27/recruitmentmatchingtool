@@ -75,8 +75,8 @@ export default async function MatchesPage({ searchParams }: MatchesPageProps) {
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Matches</h1>
-          <p className="mt-1 text-sm text-neutral-500">{total} match(es) gevonden.</p>
+          <h1 className="text-xl font-semibold text-ink">Matches</h1>
+          <p className="mt-1 text-sm text-ink-muted">{total} match(es) gevonden.</p>
         </div>
         <MatchRunButton />
       </div>
@@ -99,7 +99,7 @@ export default async function MatchesPage({ searchParams }: MatchesPageProps) {
           {matches.map((match) => (
             <TableRow key={match.id} className="hover:bg-neutral-50">
               <TableCell>
-                <Link href={`/matches/${match.id}`} className="font-medium text-neutral-900 hover:underline">
+                <Link href={`/matches/${match.id}`} className="font-medium text-ink hover:underline">
                   {match.candidate.fullName ?? "Naam onbekend"}
                 </Link>
               </TableCell>

@@ -76,19 +76,19 @@ export function UploadDropzone() {
           dragging ? "border-neutral-500 bg-neutral-50" : "border-neutral-300",
         )}
       >
-        <p className="font-medium text-neutral-700">
+        <p className="font-medium text-ink-muted">
           {uploading ? "Bezig met verwerken…" : "Sleep CV's hierheen, of klik om te kiezen"}
         </p>
-        <p className="mt-1 text-xs text-neutral-500">PDF of DOCX, één of meer bestanden tegelijk</p>
+        <p className="mt-1 text-xs text-ink-muted">PDF of DOCX, één of meer bestanden tegelijk</p>
         <input ref={inputRef} type="file" multiple accept=".pdf,.docx" className="hidden" onChange={handleFileInputChange} />
       </div>
 
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       {results && (
         <ul className="flex flex-col gap-1 text-sm">
           {results.map((r) => (
-            <li key={r.fileName} className={r.success ? "text-green-700" : "text-red-700"}>
+            <li key={r.fileName} className={r.success ? "text-success" : "text-danger"}>
               {r.success
                 ? `✓ ${r.fileName} — ${r.fullName ?? "naam onbekend"} (${r.outcome === "new" ? "nieuw" : "bijgewerkt"})`
                 : `✗ ${r.fileName} — ${r.error}`}

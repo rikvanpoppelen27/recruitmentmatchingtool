@@ -44,6 +44,28 @@ async function main() {
     });
   }
 
+  const existingTemplate = await prisma.mailTemplate.findFirst();
+  if (!existingTemplate) {
+    await prisma.mailTemplate.create({
+      data: {
+        name: "Standaard introductie",
+        description: "De gebruikelijke introductiemail voor een nieuwe kandidaat-vacature-combinatie.",
+        systemInstruction:
+          "Schrijf een standaard introductiemail: professioneel en to-the-point, met de gebruikelijke opbouw uit het stijlprofiel.",
+        isDefault: true,
+      },
+    });
+    await prisma.mailTemplate.create({
+      data: {
+        name: "Korte follow-up",
+        description: "Voor een kort vervolgbericht aan een opdrachtgever die de kandidaat al kent.",
+        systemInstruction:
+          "Schrijf een korte follow-up mail, maximaal 100 woorden, informeel, ervan uitgaand dat de opdrachtgever al eerder over deze kandidaat heeft gehoord.",
+        isDefault: false,
+      },
+    });
+  }
+
   console.log(`Seed klaar. Default user: ${user.email}`);
 }
 

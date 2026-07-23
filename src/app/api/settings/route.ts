@@ -14,6 +14,7 @@ const patchSchema = z.object({
   anonymizeCV: z.boolean().optional(),
   companyName: z.string().min(1).optional(),
   footerText: z.string().min(1).optional(),
+  autoGenerateMode: z.enum(["volledig", "alleen_matchen"]).optional(),
 });
 
 export async function PATCH(request: NextRequest) {

@@ -34,9 +34,9 @@ export function MatchRunButton() {
       <Button onClick={handleClick} disabled={loading}>
         {loading ? "Bezig met matchen…" : "Matchen draaien"}
       </Button>
-      {error && <p className="max-w-sm text-right text-sm text-red-700">{error}</p>}
+      {error && <p className="max-w-sm text-right text-sm text-danger">{error}</p>}
       {summary && (
-        <p className="max-w-sm text-right text-sm text-neutral-600">
+        <p className="max-w-sm text-right text-sm text-ink-muted">
           {summary.newMatches} nieuwe match(es) — {summary.aiCallsMade} AI-beoordelingen uitgevoerd,{" "}
           {summary.aiCallsSkipped} overgeslagen (voordrempel niet gehaald).
         </p>

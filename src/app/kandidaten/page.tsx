@@ -36,8 +36,8 @@ export default async function KandidatenPage({ searchParams }: KandidatenPagePro
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold text-neutral-900">Kandidaten</h1>
-        <p className="mt-1 text-sm text-neutral-500">{total} kandidaat/kandidaten.</p>
+        <h1 className="text-xl font-semibold text-ink">Kandidaten</h1>
+        <p className="mt-1 text-sm text-ink-muted">{total} kandidaat/kandidaten.</p>
       </div>
 
       <Card>
@@ -64,7 +64,7 @@ export default async function KandidatenPage({ searchParams }: KandidatenPagePro
           {candidates.map((candidate) => (
             <TableRow key={candidate.id}>
               <TableCell>
-                <Link href={`/kandidaten/${candidate.id}`} className="font-medium text-neutral-900 hover:underline">
+                <Link href={`/kandidaten/${candidate.id}`} className="font-medium text-ink hover:underline">
                   {candidate.fullName ?? "Naam onbekend"}
                 </Link>
               </TableCell>

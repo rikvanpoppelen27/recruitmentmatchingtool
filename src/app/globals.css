@@ -2,11 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
+/**
+ * Design tokens (fase 6B, onderdeel 9). Placeholder Morgan Black-stijl:
+ * rustig/zakelijk, licht/lichtgrijs met een donkere, bijna zwarte hoofdkleur
+ * en één accentkleur voor acties/scores. Vervang deze waarden zodra de
+ * echte huisstijl (kleurcodes, logo, lettertype) is aangeleverd — de rest
+ * van de app leest uitsluitend deze variabelen, dus dat is de enige plek
+ * die dan aangepast hoeft te worden.
+ */
+:root {
+  --color-bg: #faf9f7;
+  --color-surface: #ffffff;
+  --color-ink: #17181c;
+  --color-ink-muted: #5b5f6a;
+  --color-border: #e7e5e1;
+  --color-border-strong: #d7d4ce;
+
+  --color-accent: #2b3a67;
+  --color-accent-hover: #202c50;
+  --color-accent-fg: #ffffff;
+
+  --color-success: #1f7a4d;
+  --color-success-bg: #e6f4ec;
+  --color-warning: #92600a;
+  --color-warning-bg: #fbf0dd;
+  --color-danger: #9c2b2b;
+  --color-danger-bg: #fbe9e9;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-card: 0 1px 2px rgba(23, 24, 28, 0.06), 0 1px 1px rgba(23, 24, 28, 0.04);
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
 body {
-  background-color: #f8f8f7;
-  color: #1a1a1a;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
 }
 
 * {
-  border-color: #e2e2e2;
+  border-color: var(--color-border);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }

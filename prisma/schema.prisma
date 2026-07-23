@@ -429,6 +429,11 @@ model AppSettings {
   companyName String?
   footerText  String?
 
+  /// Fase 6B shortlist-automatisering: "volledig" (matchen + frontsheet +
+  /// mail) of "alleen_matchen" (frontsheet/mail blijven handmatig). Null
+  /// valt terug op "volledig".
+  autoGenerateMode String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

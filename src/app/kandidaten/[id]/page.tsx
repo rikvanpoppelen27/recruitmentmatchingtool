@@ -37,15 +37,15 @@ export default async function CandidateDetailPage({ params }: CandidateDetailPag
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link href="/kandidaten" className="text-sm text-neutral-500 hover:underline">
+        <Link href="/kandidaten" className="text-sm text-ink-muted hover:underline">
           ← Terug naar kandidaten
         </Link>
       </div>
 
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">{candidate.fullName ?? "Naam onbekend"}</h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <h1 className="text-xl font-semibold text-ink">{candidate.fullName ?? "Naam onbekend"}</h1>
+          <p className="mt-1 text-sm text-ink-muted">
             {candidate.region ?? "Regio onbekend"} —{" "}
             {candidate.yearsExperience !== null ? `${candidate.yearsExperience} jaar ervaring` : "Ervaring onbekend"}
           </p>
@@ -55,7 +55,7 @@ export default async function CandidateDetailPage({ params }: CandidateDetailPag
             href={cvSignedUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-md border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            className="rounded-md border border-neutral-300 px-3 py-2 text-sm font-medium text-ink-muted hover:bg-neutral-50"
           >
             Origineel CV openen
           </a>
@@ -91,11 +91,11 @@ export default async function CandidateDetailPage({ params }: CandidateDetailPag
           {candidate.workExperience.length === 0 && <p className="text-neutral-400">Geen werkervaring geparst.</p>}
           {candidate.workExperience.map((w) => (
             <div key={w.id} className="border-b border-neutral-100 pb-2 last:border-none last:pb-0">
-              <p className="font-medium text-neutral-900">
+              <p className="font-medium text-ink">
                 {w.jobTitle ?? "Functie onbekend"} {w.employer ? `— ${w.employer}` : ""}
               </p>
-              <p className="text-xs text-neutral-500">{w.period ?? "Periode onbekend"}</p>
-              {w.description && <p className="mt-1 text-neutral-700">{w.description}</p>}
+              <p className="text-xs text-ink-muted">{w.period ?? "Periode onbekend"}</p>
+              {w.description && <p className="mt-1 text-ink-muted">{w.description}</p>}
             </div>
           ))}
         </CardContent>
@@ -121,7 +121,7 @@ export default async function CandidateDetailPage({ params }: CandidateDetailPag
           <CardHeader>
             <CardTitle>Overig</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-2 text-sm text-neutral-700">
+          <CardContent className="flex flex-col gap-2 text-sm text-ink-muted">
             <p>Talen: {candidate.languages.length > 0 ? candidate.languages.join(", ") : "Niet vermeld"}</p>
             <p>Beschikbaarheid: {candidate.availability ?? "Niet vermeld"}</p>
           </CardContent>

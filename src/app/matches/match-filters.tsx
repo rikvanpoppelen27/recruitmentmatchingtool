@@ -26,8 +26,8 @@ export function MatchFilters({ candidates, vacancies }: MatchFiltersProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-end gap-4 rounded-lg border border-neutral-200 bg-white p-4">
-      <label className="flex items-center gap-2 text-sm text-neutral-700">
+    <div className="flex flex-wrap items-end gap-4 rounded-lg border border-neutral-100 bg-surface p-4">
+      <label className="flex items-center gap-2 text-sm text-ink-muted">
         <input
           type="checkbox"
           defaultChecked={searchParams.get("kansrijk") === "1"}
@@ -38,7 +38,7 @@ export function MatchFilters({ candidates, vacancies }: MatchFiltersProps) {
       </label>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-neutral-500">Minimale score: {minScore}</label>
+        <label className="text-xs font-medium text-ink-muted">Minimale score: {minScore}</label>
         <input
           type="range"
           min={0}
@@ -52,7 +52,7 @@ export function MatchFilters({ candidates, vacancies }: MatchFiltersProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-neutral-500">Kandidaat</label>
+        <label className="text-xs font-medium text-ink-muted">Kandidaat</label>
         <Select
           className="w-56"
           defaultValue={searchParams.get("candidateId") ?? ""}
@@ -68,7 +68,7 @@ export function MatchFilters({ candidates, vacancies }: MatchFiltersProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-neutral-500">Vacature</label>
+        <label className="text-xs font-medium text-ink-muted">Vacature</label>
         <Select
           className="w-64"
           defaultValue={searchParams.get("vacancyId") ?? ""}

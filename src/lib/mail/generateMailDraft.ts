@@ -45,6 +45,7 @@ export async function generateMailDraftForMatch(
   matchId: string,
   variant: MailVariant,
   styleProfile: StyleProfileWithExamples,
+  templateInstruction: string | null = null,
 ): Promise<GeneratedMailDraft> {
   const match = await prisma.match.findUnique({
     where: { id: matchId },
@@ -94,7 +95,7 @@ export async function generateMailDraftForMatch(
     exampleEmails: styleProfile.exampleEmails,
   };
 
-  const mail = await genereerMail(input, variant);
+  const mail = await genereerMail(input, variant, templateInstruction);
 
   const draft = await prisma.emailDraft.create({
     data: {

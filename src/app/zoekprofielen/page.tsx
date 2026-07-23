@@ -16,8 +16,8 @@ export default async function ZoekprofielenPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Zoekprofielen</h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <h1 className="text-xl font-semibold text-ink">Zoekprofielen</h1>
+          <p className="mt-1 text-sm text-ink-muted">
             De import draait over alle actieve profielen hieronder — geen hardcoded zoektermen meer.
           </p>
         </div>
@@ -39,7 +39,7 @@ export default async function ZoekprofielenPage() {
         <TableBody>
           {profiles.map((profile) => (
             <TableRow key={profile.id}>
-              <TableCell className="font-medium text-neutral-900">{profile.name}</TableCell>
+              <TableCell className="font-medium text-ink">{profile.name}</TableCell>
               <TableCell className="max-w-xs truncate font-mono text-xs" title={profile.query}>
                 {profile.query}
               </TableCell>
@@ -50,7 +50,7 @@ export default async function ZoekprofielenPage() {
               <TableCell>
                 {profile.isActive ? <Badge variant="success">Actief</Badge> : <Badge variant="neutral">Gepauzeerd</Badge>}
               </TableCell>
-              <TableCell className="text-xs text-neutral-500">
+              <TableCell className="text-xs text-ink-muted">
                 {profile.lastRunAt
                   ? `${profile.lastRunAt.toLocaleString("nl-NL")} (${profile.resultCount ?? 0} resultaten)`
                   : "Nog niet uitgevoerd"}
@@ -59,7 +59,7 @@ export default async function ZoekprofielenPage() {
                 <div className="flex flex-col gap-2">
                   <SearchProfileForm
                     trigger={
-                      <button type="button" className="text-left text-xs text-neutral-500 underline">
+                      <button type="button" className="text-left text-xs text-ink-muted underline">
                         Bewerken
                       </button>
                     }

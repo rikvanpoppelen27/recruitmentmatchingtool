@@ -131,7 +131,7 @@ export function AddVacancyDialog() {
             </div>
           )}
 
-          {error && <p className="text-sm text-red-700">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
 
           <div className="mt-2 flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={handleClose}>
@@ -150,7 +150,7 @@ export function AddVacancyDialog() {
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1 text-sm">
-      <span className="text-xs font-medium text-neutral-500">{label}</span>
+      <span className="text-xs font-medium text-ink-muted">{label}</span>
       {children}
     </label>
   );

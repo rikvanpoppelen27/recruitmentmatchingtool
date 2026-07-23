@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Input, Textarea } from "@/components/ui/input";
+import { Input, Select, Textarea } from "@/components/ui/input";
 
 type MailVariant = "standaard" | "korter" | "formeler" | "informeler";
 
@@ -15,10 +15,17 @@ export interface MailDraft {
   generatedAt: Date;
 }
 
+export interface MailTemplateOption {
+  id: string;
+  name: string;
+  isDefault: boolean;
+}
+
 interface MailPanelProps {
   matchId: string;
   hasStyleProfile: boolean;
   initialDrafts: MailDraft[];
+  templates: MailTemplateOption[];
 }
 
 const VARIANT_LABELS: Record<MailVariant, string> = {
@@ -28,8 +35,9 @@ const VARIANT_LABELS: Record<MailVariant, string> = {
   informeler: "Informeler",
 };
 
-export function MailPanel({ matchId, hasStyleProfile, initialDrafts }: MailPanelProps) {
+export function MailPanel({ matchId, hasStyleProfile, initialDrafts, templates }: MailPanelProps) {
   const [drafts, setDrafts] = useState<MailDraft[]>(initialDrafts);
+  const [templateId, setTemplateId] = useState<string>(templates.find((t) => t.isDefault)?.id ?? "");
   const [loadingVariant, setLoadingVariant] = useState<MailVariant | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +48,7 @@ export function MailPanel({ matchId, hasStyleProfile, initialDrafts }: MailPanel
       const response = await fetch(`/api/matches/${matchId}/mail`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ variant }),
+        body: JSON.stringify({ variant, templateId: templateId || undefined }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Genereren van het mailconcept is mislukt.");
@@ -54,16 +62,31 @@ export function MailPanel({ matchId, hasStyleProfile, initialDrafts }: MailPanel
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-ink-muted">
         Automatisch gegenereerd concept — controleer de inhoud altijd voordat je het gebruikt. Er is geen verzendknop:
         versturen doe je zelf, in je eigen mailclient.
       </p>
 
       {!hasStyleProfile && (
-        <p className="text-sm text-amber-700">
+        <p className="text-sm text-warning">
           ⚠ Er is nog geen stijlprofiel opgebouwd. Bouw er eerst één op via Instellingen voordat je een mailconcept
           genereert.
         </p>
+      )}
+
+      {templates.length > 0 && (
+        <label className="flex max-w-xs flex-col gap-1 text-sm">
+          <span className="text-xs font-medium text-ink-muted">Mailtemplate</span>
+          <Select value={templateId} onChange={(e) => setTemplateId(e.target.value)}>
+            <option value="">Geen (alleen stijlprofiel)</option>
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+                {t.isDefault ? " (standaard)" : ""}
+              </option>
+            ))}
+          </Select>
+        </label>
       )}
 
       <div className="flex flex-wrap gap-2">
@@ -79,7 +102,7 @@ export function MailPanel({ matchId, hasStyleProfile, initialDrafts }: MailPanel
         ))}
       </div>
 
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       <div className="flex flex-col gap-4">
         {drafts.map((draft) => (
@@ -129,9 +152,9 @@ function DraftCard({ matchId, draft }: { matchId: string; draft: MailDraft }) {
   }
 
   return (
-    <div className="rounded-lg border border-neutral-200 p-4">
+    <div className="rounded-lg border border-neutral-100 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        <span className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
           {VARIANT_LABELS[draft.variant]}
         </span>
         <span className="text-xs text-neutral-400">{draft.generatedAt.toLocaleString("nl-NL")}</span>
@@ -153,7 +176,7 @@ function DraftCard({ matchId, draft }: { matchId: string; draft: MailDraft }) {
             {saving ? "Opslaan…" : "Wijzigingen opslaan"}
           </Button>
         </div>
-        {error && <p className="text-sm text-red-700">{error}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
       </div>
     </div>
   );

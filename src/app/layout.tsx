@@ -20,16 +20,16 @@ const NAV_ITEMS = [
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="nl">
-      <body className="min-h-screen">
-        <header className="border-b border-neutral-200 bg-white">
-          <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3">
-            <span className="text-sm font-semibold text-neutral-900">Recruitmenttool</span>
+      <body className="min-h-screen bg-background text-ink antialiased">
+        <header className="border-b border-neutral-100 bg-surface">
+          <div className="mx-auto flex max-w-6xl items-center gap-8 px-6 py-4">
+            <span className="text-sm font-semibold tracking-tight text-ink">Recruitmenttool</span>
             <nav className="flex gap-1">
               {NAV_ITEMS.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="rounded-md px-3 py-1.5 text-sm text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                  className="rounded-md px-3 py-1.5 text-sm text-ink-muted transition-colors hover:bg-neutral-100 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   {item.label}
                 </Link>
@@ -37,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </nav>
           </div>
         </header>
-        <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
+        <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</main>
       </body>
     </html>
   );

@@ -25,3 +25,11 @@ export const frontsheetContentSchema = z.object({
 });
 
 export type FrontsheetContent = z.infer<typeof frontsheetContentSchema>;
+
+/** Output van lib/ai/frontsheet.ts (verfijnFrontsheet, fase 6B chatverfijning). */
+export const frontsheetRefinementResultSchema = frontsheetContentSchema.extend({
+  /** Korte melding als (een deel van) de instructie niet uitgevoerd kon worden (bv. gevraagde info ontbreekt). */
+  toelichting: z.string().nullable(),
+});
+
+export type FrontsheetRefinementResult = z.infer<typeof frontsheetRefinementResultSchema>;

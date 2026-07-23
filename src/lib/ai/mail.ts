@@ -44,7 +44,12 @@ export interface MailInput {
   exampleEmails: Array<{ subject: string; body: string }>;
 }
 
-function buildUserMessage(input: MailInput, variant: MailVariant, previousError: string | null): string {
+function buildUserMessage(
+  input: MailInput,
+  variant: MailVariant,
+  templateInstruction: string | null,
+  previousError: string | null,
+): string {
   const payload = JSON.stringify(
     { candidate: input.candidate, vacancy: input.vacancy, match: input.match, styleProfile: input.styleProfile },
     null,
@@ -58,6 +63,7 @@ function buildUserMessage(input: MailInput, variant: MailVariant, previousError:
   const base =
     `Schrijf de conceptmail voor deze kandidaat-vacature-combinatie, in de stijl van het meegeleverde profiel en de voorbeelden:\n\n${payload}\n\n` +
     `Stijlvoorbeelden (uitsluitend als stijlreferentie, geen inhoudelijke bron):\n\n${examplesText}` +
+    (templateInstruction ? `\n\nInstructie vanuit het gekozen mailtemplate: ${templateInstruction}` : "") +
     (variantInstruction ? `\n\nExtra instructie voor deze variant: ${variantInstruction}` : "");
 
   if (previousError === null) return base;
@@ -71,12 +77,18 @@ function buildUserMessage(input: MailInput, variant: MailVariant, previousError:
  * Genereert een conceptmail voor één match. `variant` laat alternatieven
  * genereren (korter/formeler/informeler) zonder de systeemprompt te
  * herschrijven; elke aanroep levert een nieuw, los concept op — nooit een
- * overschrijving van een eerder concept (zie scripts/mail.ts).
+ * overschrijving van een eerder concept (zie scripts/mail.ts). `templateInstruction`
+ * (fase 6B) is de instructietekst van een gekozen `MailTemplate` en wordt als
+ * extra context mee aangeleverd, naast (niet in plaats van) het stijlprofiel.
  */
-export async function genereerMail(input: MailInput, variant: MailVariant = "standaard"): Promise<MailContent> {
+export async function genereerMail(
+  input: MailInput,
+  variant: MailVariant = "standaard",
+  templateInstruction: string | null = null,
+): Promise<MailContent> {
   return callClaudeJson(
     GENEREER_MAIL_SYSTEM_PROMPT,
-    (previousError) => buildUserMessage(input, variant, previousError),
+    (previousError) => buildUserMessage(input, variant, templateInstruction, previousError),
     mailContentSchema,
     2048,
   );

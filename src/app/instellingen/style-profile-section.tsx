@@ -58,7 +58,7 @@ export function StyleProfileSection({ profile, exampleFileNames }: StyleProfileS
         <p className="text-sm text-neutral-400">Nog geen stijlprofiel opgebouwd.</p>
       )}
 
-      <label className="flex items-center gap-2 text-sm text-neutral-700">
+      <label className="flex items-center gap-2 text-sm text-ink-muted">
         <input
           type="checkbox"
           checked={mask}
@@ -74,9 +74,9 @@ export function StyleProfileSection({ profile, exampleFileNames }: StyleProfileS
         </Button>
       </div>
 
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
       {warnings.map((w, i) => (
-        <p key={i} className="text-sm text-amber-700">
+        <p key={i} className="text-sm text-warning">
           ⚠ {w}
         </p>
       ))}
@@ -87,8 +87,8 @@ export function StyleProfileSection({ profile, exampleFileNames }: StyleProfileS
 function Item({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{label}</dt>
-      <dd className="mt-0.5 text-neutral-700">{value}</dd>
+      <dt className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{label}</dt>
+      <dd className="mt-0.5 text-ink-muted">{value}</dd>
     </div>
   );
 }

@@ -17,6 +17,8 @@ export interface EffectiveBrandingSettings {
   primaryColor: string;
 }
 
+export type AutoGenerateMode = "volledig" | "alleen_matchen";
+
 function getDefaultMatchThreshold(): number {
   const raw = process.env.MATCH_THRESHOLD;
   const parsed = raw ? Number(raw) : NaN;
@@ -56,6 +58,12 @@ export async function getEffectiveBrandingSettings(): Promise<EffectiveBrandingS
   };
 }
 
+/** "volledig" (matchen + frontsheet + mail) is de standaard als er geen databasewaarde is. */
+export async function getEffectiveAutoGenerateMode(): Promise<AutoGenerateMode> {
+  const row = await getSettingsRow();
+  return (row.autoGenerateMode as AutoGenerateMode | null) ?? "volledig";
+}
+
 export interface SettingsUpdateInput {
   matchThreshold?: number;
   skillWeight?: number;
@@ -67,6 +75,7 @@ export interface SettingsUpdateInput {
   anonymizeCV?: boolean;
   companyName?: string;
   footerText?: string;
+  autoGenerateMode?: AutoGenerateMode;
 }
 
 /** Slaat aangepaste instellingen op. Alleen de meegegeven velden worden bijgewerkt. */

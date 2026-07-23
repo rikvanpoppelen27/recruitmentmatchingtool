@@ -83,8 +83,8 @@ export function SearchProfileRowActions({ id, isActive }: SearchProfileRowAction
           Verwijderen
         </Button>
       </div>
-      {result && <p className="text-xs text-neutral-500">{result}</p>}
-      {error && <p className="text-xs text-red-700">{error}</p>}
+      {result && <p className="text-xs text-ink-muted">{result}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
     </div>
   );
 }

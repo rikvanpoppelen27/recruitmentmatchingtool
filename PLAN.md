@@ -26,6 +26,7 @@ voor projectomschrijving en installatie.
 | 4    | Frontsheet + PDF-generatie          | Klaar |
 | 5    | Stijlprofiel + mailgeneratie        | Klaar |
 | 6    | Dashboard                           | Klaar |
+| 6B   | Shortlist-workflow, handmatige vacatures & UI-verfijning | Klaar |
 | 7    | Multi-user (stub)                   | Nog niet gestart |
 
 ---
@@ -278,12 +279,12 @@ verfijning van frontsheets, mailtemplates, en een visuele opfrisbeurt.
 1. Datamodel-uitbreidingen — **Klaar**
 2. Handmatige vacature-invoer + bronherkenning — **Klaar**
 3. Zoekprofielen (booleaanse query + 12 provincies, config/import.ts leeggemaakt) — **Klaar**
-4. Shortlist (plus-knop, optimistische UI) — nog niet gestart
-5. Automatisering (matchen → primaire match → frontsheet + mail, kostenbeheersing/wachtrij) — nog niet gestart
-6. Overzichtspagina `/` als werkbank — nog niet gestart
-7. Frontsheet-chatverfijning (`FrontsheetRevision`) — nog niet gestart
-8. Mailtemplates in instellingen — nog niet gestart
-9. Vormgeving (design tokens, Morgan Black-stijl) — nog niet gestart
+4. Shortlist (plus-knop, optimistische UI) — **Klaar**
+5. Automatisering (matchen → primaire match → frontsheet + mail, kostenbeheersing/wachtrij) — **Klaar**
+6. Overzichtspagina `/` als werkbank — **Klaar**
+7. Frontsheet-chatverfijning (`FrontsheetRevision`) — **Klaar**
+8. Mailtemplates in instellingen — **Klaar**
+9. Vormgeving (design tokens, Morgan Black-stijl) — **Klaar**
 
 **Onderdeel 1 — Datamodel (Klaar):**
 - `Vacancy.source` (oud: welke import-adapter) hernoemd naar `importSource`
@@ -346,8 +347,57 @@ verfijning van frontsheets, mailtemplates, en een visuele opfrisbeurt.
   geen Adzuna-aanroep) + provincie-multiselect (native `<select multiple>`,
   geen JS nodig). Tests groen (99/99), productie-build geslaagd.
 
-**Status/Geleerd:** Bezig — onderdeel 3 van 9 klaar, wacht op bevestiging
-voor onderdeel 4 (shortlist).
+**Onderdelen 4-9 — Shortlist, automatisering, werkbank, chatverfijning,
+mailtemplates, vormgeving (allemaal Klaar, in één doorlopende sessie):**
+- **Shortlist (4):** plus-knop op `/vacatures` (optimistisch, terugdraaien bij
+  fout) zet `isShortlisted` en triggert direct `POST /api/vacancies/[id]/
+  shortlist`; filter alleen-shortlist/niet-shortlist.
+- **Automatisering (5):** `lib/vacancy/shortlistAutomation.ts` hergebruikt de
+  bestaande fase 3-primitieven (skills.ts/score.ts/ai/match.ts) voor precies
+  één vacature i.p.v. de globale lus uit runMatching.ts. Hoogst scorende
+  kandidaat ≥ drempel wordt `isPrimary`; bij `autoGenerateMode: "volledig"`
+  (instelbaar in /instellingen, default) volgen frontsheet + mail automatisch.
+  Een simpele in-process promise-queue (`enqueueShortlistAutomation`)
+  serialiseert snel-achter-elkaar geshortliste vacatures.
+- **Werkbank (6):** `/` toont nu de shortlist als hoofdinhoud (kerncijfers +
+  import-knop blijven bovenaan), gesorteerd op status dan score, met
+  deep-links naar `/matches/[id]#frontsheet`/`#mail` — hergebruikt de
+  bestaande panelen i.p.v. ze te dupliceren op de homepage.
+  **Ontwerpkeuze:** de site-brede lay-out overschaduwt op sommige plekken de
+  Tailwind `focus-visible:ring`-kleur niet consistent bij alle interactieve
+  elementen (bv. sommige plain `<a>`-links binnen tabellen) — functioneel
+  werkt tab-navigatie, maar een latere visuele a11y-audit met een screenreader
+  is niet gedaan; dat is transparant een gat in deze sessie, geen "klaar en
+  getest" claim voor a11y in de volle breedte.
+- **Chatverfijning (7):** `verfijnFrontsheet` (nieuwe systeemprompt) krijgt
+  origineel profiel + huidige inhoud + instructie mee, past alleen aan wat
+  gevraagd wordt, en rapporteert via `toelichting` als gevraagde info
+  ontbreekt i.p.v. te verzinnen. **Echt geverifieerd met een instructie die om
+  verzonnen info vroeg** ("voeg 8 jaar ervaring bij Google toe") — de AI
+  weigerde terecht en meldde dat dit niet in de brondata stond. Elke ronde
+  wordt een `FrontsheetRevision`; "deze versie herstellen" rendert opnieuw
+  zonder nieuwe AI-call.
+- **Mailtemplates (8):** CRUD in /instellingen, twee seeds ("Standaard
+  introductie", default, en "Korte follow-up"), instructie wordt als extra
+  context aan `genereerMail` meegegeven (naast, niet in plaats van, het
+  stijlprofiel); templateselector in het mailpaneel per match.
+- **Vormgeving (9):** design tokens als CSS-variabelen in `globals.css` +
+  Tailwind-kleuren die ernaar verwijzen (`ink`/`surface`/`accent`/`success`/
+  `warning`/`danger`) — één plek om de echte Morgan Black-huisstijl later in
+  te zetten. Bestaande pagina's zijn nagelopen en overgezet naar de tokens.
+  **Bewuste scopekeuze:** geen overstap naar de shadcn/ui-CLI zelf (zou een
+  groot deel van de al bestaande, werkende component-kit moeten vervangen) —
+  de handgebouwde kit uit fase 6 volgt al dezelfde conventies en is nu
+  visueel verfijnd (zachtere randen, één schaduwniveau, focus-rings).
+- **Echte end-to-end-verificatie** (niet gesimuleerd): drempel tijdelijk naar
+  70 gezet, een vacature geshortlist → matchen (hergebruikte bestaande
+  matches), primaire kandidaat (Jan Jansen, score 75) correct gekoppeld,
+  frontsheet én mailconcept automatisch gegenereerd, alles zichtbaar op de
+  werkbank en de matchdetailpagina. Daarna testdata/instellingen weer
+  teruggezet (shortlist verwijderd, drempel en `isPrimary` gereset).
+  Tests 99/99 groen, productie-build geslaagd.
+
+**Status/Geleerd:** Fase 6B volledig afgerond (9/9 onderdelen).
 
 ---
 

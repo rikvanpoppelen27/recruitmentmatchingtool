@@ -120,9 +120,9 @@ export function SearchProfileForm({ trigger, initialValues }: SearchProfileFormP
             />
           </Field>
 
-          {interpretation?.error && <p className="text-sm text-red-700">{interpretation.error}</p>}
+          {interpretation?.error && <p className="text-sm text-danger">{interpretation.error}</p>}
           {interpretation?.description && (
-            <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-700">
+            <div className="rounded-md border border-neutral-100 bg-neutral-50 p-3 text-xs text-ink-muted">
               <p>
                 <strong>Moet bevatten:</strong>{" "}
                 {interpretation.description.mustContain.length > 0 ? interpretation.description.mustContain.join(", ") : "—"}
@@ -140,27 +140,27 @@ export function SearchProfileForm({ trigger, initialValues }: SearchProfileFormP
 
           <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-neutral-500">Provincies *</span>
+              <span className="text-xs font-medium text-ink-muted">Provincies *</span>
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className="text-xs text-neutral-500 underline"
+                  className="text-xs text-ink-muted underline"
                   onClick={() => updateField("provinces", PROVINCES.map((p) => p.code))}
                 >
                   Alles selecteren
                 </button>
                 <button
                   type="button"
-                  className="text-xs text-neutral-500 underline"
+                  className="text-xs text-ink-muted underline"
                   onClick={() => updateField("provinces", [])}
                 >
                   Selectie wissen
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-1 rounded-md border border-neutral-200 p-2 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-1 rounded-md border border-neutral-100 p-2 sm:grid-cols-3">
               {PROVINCES.map((province) => (
-                <label key={province.code} className="flex items-center gap-2 text-sm text-neutral-700">
+                <label key={province.code} className="flex items-center gap-2 text-sm text-ink-muted">
                   <input
                     type="checkbox"
                     checked={values.provinces.includes(province.code)}
@@ -184,7 +184,7 @@ export function SearchProfileForm({ trigger, initialValues }: SearchProfileFormP
               />
             </Field>
             <div className="flex flex-col justify-end gap-2 pb-2">
-              <label className="flex items-center gap-2 text-sm text-neutral-700">
+              <label className="flex items-center gap-2 text-sm text-ink-muted">
                 <input
                   type="checkbox"
                   checked={values.titleOnly}
@@ -193,7 +193,7 @@ export function SearchProfileForm({ trigger, initialValues }: SearchProfileFormP
                 />
                 Alleen in functietitel zoeken
               </label>
-              <label className="flex items-center gap-2 text-sm text-neutral-700">
+              <label className="flex items-center gap-2 text-sm text-ink-muted">
                 <input
                   type="checkbox"
                   checked={values.isActive}
@@ -205,7 +205,7 @@ export function SearchProfileForm({ trigger, initialValues }: SearchProfileFormP
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-700">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
 
           <div className="mt-2 flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={handleClose}>
@@ -224,7 +224,7 @@ export function SearchProfileForm({ trigger, initialValues }: SearchProfileFormP
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1 text-sm">
-      <span className="text-xs font-medium text-neutral-500">{label}</span>
+      <span className="text-xs font-medium text-ink-muted">{label}</span>
       {children}
     </label>
   );

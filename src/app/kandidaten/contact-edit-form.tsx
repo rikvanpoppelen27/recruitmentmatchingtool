@@ -63,7 +63,7 @@ export function ContactEditForm({ candidateId, email, phone }: ContactEditFormPr
           {saving ? "Opslaan…" : "Opslaan"}
         </Button>
       )}
-      {error && <p className="text-xs text-red-700">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
     </div>
   );
 }

@@ -4,15 +4,16 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import type { EffectiveBrandingSettings, EffectiveMatchSettings } from "@/lib/settings";
+import { Input, Select } from "@/components/ui/input";
+import type { AutoGenerateMode, EffectiveBrandingSettings, EffectiveMatchSettings } from "@/lib/settings";
 
 interface SettingsFormProps {
   matchSettings: EffectiveMatchSettings;
   brandingSettings: EffectiveBrandingSettings;
+  autoGenerateMode: AutoGenerateMode;
 }
 
-export function SettingsForm({ matchSettings, brandingSettings }: SettingsFormProps) {
+export function SettingsForm({ matchSettings, brandingSettings, autoGenerateMode }: SettingsFormProps) {
   const router = useRouter();
   const [values, setValues] = useState({
     matchThreshold: matchSettings.matchThreshold,
@@ -25,6 +26,7 @@ export function SettingsForm({ matchSettings, brandingSettings }: SettingsFormPr
     anonymizeCV: brandingSettings.anonymizeCV,
     companyName: brandingSettings.companyName,
     footerText: brandingSettings.footerText,
+    autoGenerateMode,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -134,7 +136,7 @@ export function SettingsForm({ matchSettings, brandingSettings }: SettingsFormPr
         </Field>
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-neutral-700">
+      <label className="flex items-center gap-2 text-sm text-ink-muted">
         <input
           type="checkbox"
           checked={values.anonymizeCV}
@@ -144,12 +146,23 @@ export function SettingsForm({ matchSettings, brandingSettings }: SettingsFormPr
         Contactgegevens uit het CV verwijderen bij het samenvoegen tot een presentatiedocument (anonimisering)
       </label>
 
+      <Field label="Shortlist-automatisering (kostenbeheersing AI-calls)">
+        <Select
+          value={values.autoGenerateMode}
+          onChange={(e) => updateField("autoGenerateMode", e.target.value as AutoGenerateMode)}
+          className="w-80"
+        >
+          <option value="volledig">Volledig automatisch (matchen + frontsheet + mail)</option>
+          <option value="alleen_matchen">Alleen matchen (frontsheet/mail blijven handmatig)</option>
+        </Select>
+      </Field>
+
       <div className="flex items-center gap-3">
         <Button onClick={handleSave} disabled={saving}>
           {saving ? "Opslaan…" : "Instellingen opslaan"}
         </Button>
-        {saved && <span className="text-sm text-green-700">Opgeslagen.</span>}
-        {error && <span className="text-sm text-red-700">{error}</span>}
+        {saved && <span className="text-sm text-success">Opgeslagen.</span>}
+        {error && <span className="text-sm text-danger">{error}</span>}
       </div>
     </div>
   );
@@ -158,7 +171,7 @@ export function SettingsForm({ matchSettings, brandingSettings }: SettingsFormPr
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-xs font-medium text-neutral-500">{label}</span>
+      <span className="text-xs font-medium text-ink-muted">{label}</span>
       {children}
     </label>
   );
